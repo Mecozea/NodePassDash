@@ -13,16 +13,14 @@ import (
 	"NodePassDash/internal/sse"
 	"NodePassDash/internal/tunnel"
 	"NodePassDash/internal/websocket"
-	"archive/zip"
 	"context"
 	"embed"
 	"flag"
 	"fmt"
-	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -34,104 +32,27 @@ import (
 // Version 会在构建时通过 -ldflags "-X main.Version=xxx" 注入
 var Version = "dev"
 
-//go:embed dist.zip
-var distZip embed.FS
+//go:embed dist
+var distFS embed.FS
 
-// extractDistIfNeeded 如果当前目录没有 dist 文件夹则解压嵌入的 zip
-func extractDistIfNeeded() error {
-	// 检查 dist 目录是否已存在
-	if _, err := os.Stat("dist"); err == nil {
-		log.Debug("dist 目录已存在，跳过解压")
-		return nil
-	}
-
-	log.Infof("dist 目录不存在，开始解压嵌入的 dist.zip...")
-
-	// 读取嵌入的 zip 文件
-	zipData, err := distZip.ReadFile("dist.zip")
+// serveStaticFile 从嵌入文件系统中提供静态文件
+func serveStaticFile(c *gin.Context, fsys fs.FS, fileName, contentType string) {
+	fileData, err := fsys.Open(fileName)
 	if err != nil {
-		return fmt.Errorf("无法读取嵌入的 dist.zip: %v", err)
+		c.Status(404)
+		return
 	}
-
-	// 创建临时文件
-	tmpFile, err := os.CreateTemp("", "dist-*.zip")
+	defer fileData.Close()
+	
+	stat, err := fileData.Stat()
 	if err != nil {
-		return fmt.Errorf("无法创建临时文件: %v", err)
+		c.Status(500)
+		return
 	}
-	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
-
-	// 写入 zip 数据到临时文件
-	if _, err := tmpFile.Write(zipData); err != nil {
-		return fmt.Errorf("无法写入临时文件: %v", err)
-	}
-	tmpFile.Close()
-
-	// 解压 zip 文件
-	if err := unzip(tmpFile.Name(), "."); err != nil {
-		return fmt.Errorf("解压失败: %v", err)
-	}
-
-	log.Infof("成功解压 dist 目录")
-	return nil
+	
+	c.DataFromReader(200, stat.Size(), contentType, fileData, nil)
 }
 
-// unzip 解压 zip 文件到指定目录
-func unzip(src, dest string) error {
-	r, err := zip.OpenReader(src)
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-
-	// 创建目标目录
-	os.MkdirAll(dest, 0755)
-
-	// 解压函数
-	extractAndWriteFile := func(f *zip.File) error {
-		rc, err := f.Open()
-		if err != nil {
-			return err
-		}
-		defer rc.Close()
-
-		path := filepath.Join(dest, "dist", f.Name)
-
-		// 检查路径是否安全（防止 zip bomb）
-		destDir := filepath.Join(filepath.Clean(dest), "dist")
-		if !strings.HasPrefix(path, destDir+string(os.PathSeparator)) && path != destDir {
-			return fmt.Errorf("无效的文件路径: %s", f.Name)
-		}
-
-		if f.FileInfo().IsDir() {
-			os.MkdirAll(path, f.FileInfo().Mode())
-			return nil
-		}
-
-		// 创建文件的目录
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			return err
-		}
-
-		outFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.FileInfo().Mode())
-		if err != nil {
-			return err
-		}
-		defer outFile.Close()
-
-		_, err = io.Copy(outFile, rc)
-		return err
-	}
-
-	for _, f := range r.File {
-		err := extractAndWriteFile(f)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
 
 func main() {
 	// 命令行参数处理
@@ -168,11 +89,6 @@ func main() {
 		return
 	}
 
-	// 解压 dist 目录（如果需要）
-	if err := extractDistIfNeeded(); err != nil {
-		log.Errorf("解压 dist 失败: %v", err)
-		return
-	}
 
 	// 确保public目录存在
 	dbDir := "public"
@@ -248,8 +164,45 @@ func main() {
 	ginRouter := router.SetupRouter(gormDB, sseService, sseManager, wsService)
 
 	// 添加静态文件服务
-	ginRouter.Static("/assets", "dist/assets")               // 静态资源
-	ginRouter.StaticFile("/favicon.ico", "dist/favicon.ico") // favicon
+	// 创建 dist 子文件系统
+	distSubFS, err := fs.Sub(distFS, "dist")
+	if err != nil {
+		log.Errorf("创建 dist 子文件系统失败: %v", err)
+		return
+	}
+
+	// 创建 assets 子文件系统（用于 JS/CSS 等构建资源）
+	assetsSubFS, err := fs.Sub(distSubFS, "assets")
+	if err != nil {
+		log.Errorf("创建 assets 子文件系统失败: %v", err)
+		return
+	}
+
+	// JS/CSS 等构建资源
+	ginRouter.StaticFS("/assets", http.FS(assetsSubFS))
+	
+	// 处理根目录的静态文件（favicon, logo 等）
+	ginRouter.GET("/favicon.ico", func(c *gin.Context) {
+		serveStaticFile(c, distSubFS, "favicon.ico", "image/x-icon")
+	})
+
+	// 具体处理已知的 SVG 文件
+	svgFiles := []string{
+		"nodepass-logo-1.svg",
+		"nodepass-logo-2.svg", 
+		"nodepass-logo-3.svg",
+		"cloudflare-svgrepo-com.svg",
+		"github-icon-svgrepo-com.svg",
+		"vite.svg",
+	}
+	
+	for _, svgFile := range svgFiles {
+		svgFile := svgFile // 避免闭包问题
+		ginRouter.GET("/"+svgFile, func(c *gin.Context) {
+			serveStaticFile(c, distSubFS, svgFile, "image/svg+xml")
+		})
+	}
+
 	ginRouter.NoRoute(func(c *gin.Context) {
 		// SPA 支持：如果是API路由但未找到，返回404；否则返回index.html
 		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
@@ -257,7 +210,20 @@ func main() {
 			return
 		}
 		// 其他路径返回 index.html 支持 SPA
-		c.File("dist/index.html")
+		indexData, err := distSubFS.Open("index.html")
+		if err != nil {
+			c.String(500, "Failed to load index.html")
+			return
+		}
+		defer indexData.Close()
+		
+		stat, err := indexData.Stat()
+		if err != nil {
+			c.String(500, "Failed to get index.html info")
+			return
+		}
+		
+		c.DataFromReader(200, stat.Size(), "text/html; charset=utf-8", indexData, nil)
 	})
 
 	// 读取端口：命令行 > 环境变量 > 默认值

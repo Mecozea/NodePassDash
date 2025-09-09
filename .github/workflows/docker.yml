@@ -58,7 +58,7 @@ jobs:
             echo "🏷️ Tag触发，版本: $VERSION (正式发布)"
           else
             # 非tag触发，使用package.json版本
-            VERSION=$(node -p "require('./package.json').version")
+            VERSION=$(node -p "require('./web/package.json').version")
             IS_RELEASE=false
             echo "📦 非tag触发，使用package.json版本: $VERSION (开发版本)"
           fi

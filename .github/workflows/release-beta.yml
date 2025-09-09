@@ -27,27 +27,21 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: 'web/pnpm-lock.yaml'
 
       - name: 🏗️ 构建前端并准备嵌入
         run: |
           echo "📦 安装前端依赖..."
+          cd web
           pnpm install --frozen-lockfile
           
           echo "🏗️ 构建前端静态文件..."
           pnpm build
           
           echo "📁 验证构建结果:"
-          ls -la dist/
+          ls -la ../cmd/server/dist/
           
-          echo "📦 压缩前端文件为 dist.zip..."
-          cd dist && zip -r ../dist.zip . && cd ..
-          
-          echo "📋 复制 dist.zip 到 cmd/server/ 目录..."
-          cp dist.zip cmd/server/
-          
-          echo "🔍 验证文件:"
-          ls -la dist.zip cmd/server/dist.zip
-          echo "✅ 前端构建和嵌入准备完成"
+          echo "✅ 前端构建完成，文件已输出到 cmd/server/dist/"
 
       - name: 🔧 安装CGO交叉编译工具
         run: |
@@ -99,7 +93,7 @@ jobs:
             fi
           else
             # 分支触发处理
-            VERSION=$(node -p "require('./package.json').version")
+            VERSION=$(node -p "require('./web/package.json').version")
             BRANCH_NAME=${GITHUB_REF#refs/heads/}
             TEMP_TAG="v${VERSION}"
             IS_TAG_TRIGGER=false
