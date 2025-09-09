@@ -3,7 +3,7 @@ name: Docker CI (beta)
 on:
   push:
     tags: [ 'v*.*.*-beta*' ]
-    branches: [ '*-beta' ]
+    branches: [ 'v3.x' ]
 
 jobs:
   build-and-push:
