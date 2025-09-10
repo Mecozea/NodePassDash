@@ -5,7 +5,7 @@
 ![Version](https://img.shields.io/badge/version-2.2.1-blue.svg)
 ![GitHub license](https://img.shields.io/github/license/NodePassProject/NodePassDash)
 
-NodePassDash是一个现代化的 NodePass 管理界面，基于 Go 后端 + Next.js 14、HeroUI 和 TypeScript 构建。提供实时隧道监控、流量统计和端点管理功能。
+NodePassDash是一个现代化的 NodePass 管理界面，基于 Go 后端 + React + Vite、HeroUI 和 TypeScript 构建。提供实时隧道监控、流量统计和端点管理功能。
 
 > **⚠️ 重大版本升级通知**  
 > **version 2.x 是一个重大的架构迁移版本！** 从 Node.js 后端完全重构为 Go 后端，带来了更高的性能和稳定性。 
@@ -31,17 +31,15 @@ NodePassDash是一个现代化的 NodePass 管理界面，基于 Go 后端 + Nex
 
 ## 📂 目录结构（简化）
 ```text
-├─ app/                 前端页面 (Next.js App Router)
-│  ├─ ...
+├─ web/                 前端应用 (React + Vite + HeroUI)
+│  ├─ src/              React 组件和页面
+│  ├─ public/           静态资源 (logo, favicon 等)
+│  └─ package.json      前端依赖和构建脚本
 ├─ internal/            Go 业务代码
-│  ├─ api/              HTTP 处理器 / 路由
-│  ├─ sse/              SSE Manager & Service
-│  └─ ...
-├─ cmd/server/          Go 入口 (`main.go`)
-├─ public/              SQLite 数据库 / 静态资源
-├─ dist/                ⚙️ 前端构建产物（由 `pnpm build` 生成）
-├─ Dockerfile           多阶段镜像构建
-└─ scripts/             构建辅助脚本
+├─ cmd/server/          Go 应用入口
+├─ Dockerfile           多阶段容器构建
+├─ build.sh             本地构建脚本
+└─ .github/workflows/   CI/CD 自动化构建
 ```
 
 ## ⚡️ 快速开始
