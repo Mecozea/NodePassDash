@@ -1,0 +1,41 @@
+services:
+  # NodePass 应用 - 使用GitHub发布的镜像
+  nodepassdash:
+    image: ghcr.io/nodepassproject/nodepassdash:latest
+    container_name: nodepassdash
+    ports:
+      - "3000:3000"  # 整合的Next.js应用
+    # enenvironment:
+    #   - PORT=3000
+    #   - LOG-LEVEL=INFO
+    #   - TLS_CERT=/path/to/cert.pem
+    #   - TLS_KEY=/path/to/key.pem
+    #   - DISABLE_LOGIN=true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro 
+      # TLS证书
+      # - /path/to/cert.pem:/path/to/cert.pem
+      # - /path/to/key.pem:/path/to/key.pem
+      # 挂载日志
+      - ./log:/app/log:ro
+      # SQLite 数据库文件
+      - ./public:/app/public
+      # 日志和数据目录,如需挂载，请先赋予文件夹权限```chmod 777 logs```，否则可能会导致容器启动失败
+      # - ./logs:/app/logs
+      # - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - default      # 默认网络提供 IPv4
+      - ipv6net      # 外部 IPv6 网络
+ 
+networks:
+  ipv6net:
+    external: true  # 使用外部创建的网络
+  default:
+    driver: bridge  # 默认 IPv4 网络
