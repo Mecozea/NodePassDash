@@ -59,6 +59,9 @@ import {
   faTag,
   faRecycle,
   faTimes,
+  faNetworkWired,
+  faExchangeAlt,faArrowRight,
+  faShield,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTunnelActions } from "@/lib/hooks/use-tunnel-actions";
 import { addToast } from "@heroui/toast";
@@ -70,6 +73,7 @@ import BatchCreateModal from "@/components/tunnels/batch-create-modal";
 import BatchUrlCreateTunnelModal from "@/components/tunnels/batch-url-create-tunnel-modal";
 import TagManagementModal from "@/components/tunnels/tag-management-modal";
 import SimpleTagModal from "@/components/tunnels/simple-tag-modal";
+import ScenarioCreateModal, { ScenarioType } from "@/components/tunnels/scenario-create-modal";
 import { useSettings } from "@/components/providers/settings-provider";
 import { useIsMobile } from "@/lib/hooks/use-media-query";
 
@@ -805,6 +809,10 @@ export default function TunnelsPage() {
     null
   );
 
+  // 场景创建模态框状态
+  const [scenarioModalOpen, setScenarioModalOpen] = useState(false);
+  const [selectedScenarioType, setSelectedScenarioType] = useState<ScenarioType | undefined>();
+
   const showManualCopyModal = (text: string) => {
     setManualCopyText(text);
     setIsManualCopyOpen(true);
@@ -1491,14 +1499,46 @@ export default function TunnelsPage() {
                 标签管理
               </Button>
               {settings.isBeginnerMode && (
-                <Button
-                  variant="flat"
-                  color="secondary"
-                  startContent={<FontAwesomeIcon icon={faLayerGroup} />}
-                  onPress={() => navigate("/templates/")}
-                >
-                  场景创建
-                </Button>)}
+                <Dropdown placement="bottom-end">
+                  <DropdownTrigger>
+                    <Button
+                      variant="flat"
+                      color="secondary"
+                      className="bg-linear-to-tr from-pink-500 to-yellow-500 text-white shadow-lg"
+                      startContent={<FontAwesomeIcon icon={faLayerGroup} />}
+                    >
+                      场景创建
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    aria-label="场景创建选项"
+                    onAction={(key) => {
+                      const scenarioType = key as ScenarioType;
+                      setSelectedScenarioType(scenarioType);
+                      setScenarioModalOpen(true);
+                    }}
+                  >
+                    <DropdownItem
+                      key="nat-penetration"
+                      startContent={<FontAwesomeIcon icon={faShield} fixedWidth />}
+                    >
+                      NAT穿透
+                    </DropdownItem>
+                    <DropdownItem
+                      key="single-forward"
+                      startContent={<FontAwesomeIcon icon={faArrowRight} fixedWidth />}
+                    >
+                      单端转发
+                    </DropdownItem>
+                    <DropdownItem
+                      key="tunnel-forward"
+                      startContent={<FontAwesomeIcon icon={faExchangeAlt} fixedWidth />}
+                    >
+                      隧道转发
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
+              )}
               {/* 创建按钮组 */}
               <ButtonGroup>
                 <Button
@@ -2515,6 +2555,18 @@ export default function TunnelsPage() {
           }}
         />
       )}
+
+      {/* 场景创建模态框 */}
+      <ScenarioCreateModal
+        isOpen={scenarioModalOpen}
+        onOpenChange={setScenarioModalOpen}
+        scenarioType={selectedScenarioType}
+        onSaved={() => {
+          setScenarioModalOpen(false);
+          setSelectedScenarioType(undefined);
+          fetchTunnels();
+        }}
+      />
     </>
   );
 }

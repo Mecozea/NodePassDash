@@ -1146,8 +1146,8 @@ export default function EndpointDetailPage() {
             </div> */}
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" color="primary" variant="flat" onPress={() => setExtractOpen(true)}>提取</Button>
-            <Button size="sm" color="secondary" variant="flat" onPress={() => setImportOpen(true)}>导入</Button>
+            {/* <Button size="sm" color="primary" variant="flat" onPress={() => setExtractOpen(true)}>提取</Button>
+            <Button size="sm" color="secondary" variant="flat" onPress={() => setImportOpen(true)}>导入</Button> */}
           </div>
         </CardHeader>
         <CardBody>
