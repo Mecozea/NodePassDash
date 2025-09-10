@@ -60,6 +60,7 @@ func SetupEndpointRoutes(rg *gin.RouterGroup, endpointService *endpoint.Service,
 	rg.GET("/endpoints/:id/file-logs/dates", endpointHandler.HandleGetAvailableLogDates)
 	rg.GET("/endpoints/:id/stats", endpointHandler.HandleEndpointStats)
 	rg.POST("/endpoints/:id/tcping", endpointHandler.HandleTCPing)
+	rg.POST("/endpoints/:id/network-debug", endpointHandler.HandleNetworkDebug)
 
 	// 全局回收站
 	rg.GET("/recycle", endpointHandler.HandleRecycleListAll)
@@ -1718,4 +1719,56 @@ func (h *EndpointHandler) HandleTCPing(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+// HandleNetworkDebug 网络诊断测试 (POST /api/endpoints/{id}/network-debug)
+func (h *EndpointHandler) HandleNetworkDebug(c *gin.Context) {
+	endpointIDStr := c.Param("id")
+	endpointID, err := strconv.ParseInt(endpointIDStr, 10, 64)
+	if err != nil {
+		c.String(http.StatusBadRequest, "Invalid endpoint ID")
+		return
+	}
+
+	// 解析请求体
+	var req struct {
+		Target string `json:"target"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.String(http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if req.Target == "" {
+		c.String(http.StatusBadRequest, "Missing target parameter")
+		return
+	}
+
+	// 获取端点信息
+	var endpoint struct {
+		URL     string
+		APIPath string
+		APIKey  string
+	}
+
+	db := h.endpointService.DB()
+	if err := db.Raw(`SELECT url, api_path, api_key FROM endpoints WHERE id = ?`, endpointID).Scan(&endpoint).Error; err != nil {
+		if err == sql.ErrNoRows {
+			c.String(http.StatusNotFound, "Endpoint not found")
+			return
+		}
+		c.String(http.StatusInternalServerError, "Failed to get endpoint info")
+		return
+	}
+
+	// 调用NodePass的单次TCPing接口
+	result, err := nodepass.SingleTCPing(endpointID, req.Target)
+	if err != nil {
+		log.Errorf("[API]网络诊断测试失败: target=%s, err=%v", req.Target, err)
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// 直接返回 singleResult
+	c.JSON(http.StatusOK, result)
 }

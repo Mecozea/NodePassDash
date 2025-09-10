@@ -404,7 +404,7 @@ export default function EndpointsPage() {
   };
   const handleExportData = async () => {
     try {
-      const response = await fetch('/api/endpoints/data/export');
+      const response = await fetch('/api/data/export');
       if (!response.ok) {
         throw new Error('导出失败');
       }
@@ -464,7 +464,7 @@ export default function EndpointsPage() {
       const fileContent = await selectedFile.text();
       const importData = JSON.parse(fileContent);
 
-      const response = await fetch('/api/endpoints/data/import', {
+      const response = await fetch('/api/data/import', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

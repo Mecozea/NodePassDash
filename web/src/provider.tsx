@@ -1,6 +1,7 @@
 import type { NavigateOptions } from "react-router-dom";
 
 import { HeroUIProvider } from "@heroui/system";
+import { ToastProvider } from "@heroui/toast";
 import { useHref, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { ThemeProvider } from "next-themes";
@@ -37,6 +38,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <HeroUIProvider navigate={navigate} useHref={useHref}>
+      <ToastProvider 
+        placement="top-center"
+        toastOffset={80}
+        maxVisibleToasts={1}
+        // toastProps={{ timeout: 1000 }}
+      />
       <ThemeProvider
         attribute="class"
         defaultTheme="system"

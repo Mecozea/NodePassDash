@@ -290,6 +290,39 @@ func TCPing(endpointID int64, target string) (*TCPingResult, error) {
 	return result, nil
 }
 
+// SingleTCPing 执行单次TCPing测试，用于网络诊断
+func SingleTCPing(endpointID int64, target string) (*NetworkDebugResult, error) {
+	baseURL, apiKey, _ := GetCache().Get(fmt.Sprintf("%d", endpointID))
+	timestamp := time.Now().UnixMilli()
+
+	// 单次测试结果结构
+	var singleResult struct {
+		Target    string `json:"target"`
+		Connected bool   `json:"connected"`
+		Latency   int64  `json:"latency"`
+		Error     string `json:"error"`
+	}
+
+	// 使用超时客户端进行请求
+	if err := request(http.MethodGet, fmt.Sprintf("%s/tcping?target=%s", baseURL, target), apiKey, nil, &singleResult); err != nil {
+		// 网络请求失败或超时
+		return &NetworkDebugResult{
+			Timestamp: timestamp,
+			Success:   false,
+			Latency:   0,
+			Error:     err.Error(),
+		}, nil
+	}
+
+	// 返回匹配前端期望的结构
+	return &NetworkDebugResult{
+		Timestamp: timestamp,
+		Success:   singleResult.Connected,
+		Latency:   singleResult.Latency,
+		Error:     singleResult.Error,
+	}, nil
+}
+
 //go:generate stringer -type=Instance
 type InstanceResult struct {
 	ID      string  `json:"id"`
@@ -351,6 +384,14 @@ type TCPingResult struct {
 	MaxLatency      *int64   `json:"maxLatency"`      // 最慢响应时间（毫秒）
 	AvgLatency      *float64 `json:"avgLatency"`      // 平均响应时间（毫秒）
 	PacketLoss      float64  `json:"packetLoss"`      // 丢包率（百分比）
+}
+
+// NetworkDebugResult 网络诊断结果（简单版本）
+type NetworkDebugResult struct {
+	Timestamp int64  `json:"timestamp"`
+	Success   bool   `json:"success"`
+	Latency   int64  `json:"latency"`
+	Error     string `json:"error"`
 }
 
 // server://<bind_addr>:<bind_port>/<target_host>:<target_port>?<参数>

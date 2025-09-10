@@ -123,7 +123,8 @@ interface Endpoint {
 export default function TunnelsPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [filterValue, setFilterValue] = useState("");
+  const [searchInput, setSearchInput] = useState(""); // 搜索输入框的即时状态
+  const [filterValue, setFilterValue] = useState(""); // 实际用于API调用的搜索值
   const [statusFilter, setStatusFilter] = useState("all");
   const [endpointFilter, setEndpointFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
@@ -526,58 +527,55 @@ export default function TunnelsPage() {
       return;
     }
 
-    // 执行批量启动
+    // 显示进行中toast
     addToast({
-      timeout: 1,
       title: "批量启动中...",
       description: `正在启动 ${stoppedTunnels.length} 个实例，请稍候`,
       color: "primary",
-      promise: fetch(buildApiUrl("/api/tunnels/batch/action"), {
+    });
+
+    try {
+      const response = await fetch(buildApiUrl("/api/tunnels/batch/action"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ids: stoppedTunnels.map((t) => Number(t.id)),
           action: "start",
         }),
-      })
-        .then(async (response) => {
-          const data = await response.json();
-          if (!response.ok) {
-            throw new Error(data.error || "批量启动失败");
-          }
+      });
 
-          const succeeded = data.operated || 0;
-          const failed = data.failCount || 0;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "批量启动失败");
+      }
 
-          if (succeeded > 0) {
-            addToast({
-              title: "批量启动完成",
-              description: `成功启动 ${succeeded} 个实例${failed > 0 ? `，${failed} 个失败` : ""}`,
-              color: failed === 0 ? "success" : "warning",
-            });
-          }
+      const succeeded = data.operated || 0;
+      const failed = data.failCount || 0;
 
-          if (failed > 0 && data.results) {
-            const failedTunnels = data.results.filter((r: any) => !r.success);
-            console.error(
-              "启动失败的实例:",
-              failedTunnels.map((f: any) => `${f.name}: ${f.error}`)
-            );
-          }
+      // 显示结果toast
+      addToast({
+        title: "批量启动完成",
+        description: `成功启动 ${succeeded} 个实例${failed > 0 ? `，${failed} 个失败` : ""}`,
+        color: failed === 0 ? "success" : "warning",
+      });
 
-          // 刷新实例列表
-          fetchTunnels();
-          return { succeeded, failed };
-        })
-        .catch((error) => {
-          addToast({
-            title: "批量启动失败",
-            description: error instanceof Error ? error.message : "未知错误",
-            color: "danger",
-          });
-          throw error;
-        }),
-    });
+      if (failed > 0 && data.results) {
+        const failedTunnels = data.results.filter((r: any) => !r.success);
+        console.error(
+          "启动失败的实例:",
+          failedTunnels.map((f: any) => `${f.name}: ${f.error}`)
+        );
+      }
+
+      // 刷新实例列表
+      await fetchTunnels();
+    } catch (error) {
+      addToast({
+        title: "批量启动失败",
+        description: error instanceof Error ? error.message : "未知错误",
+        color: "danger",
+      });
+    }
   };
 
   // 执行批量停止
@@ -618,58 +616,55 @@ export default function TunnelsPage() {
       return;
     }
 
-    // 执行批量停止
+    // 显示进行中toast
     addToast({
-      timeout: 1,
       title: "批量停止中...",
       description: `正在停止 ${runningTunnels.length} 个实例，请稍候`,
       color: "primary",
-      promise: fetch(buildApiUrl("/api/tunnels/batch/action"), {
+    });
+
+    try {
+      const response = await fetch(buildApiUrl("/api/tunnels/batch/action"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ids: runningTunnels.map((t) => Number(t.id)),
           action: "stop",
         }),
-      })
-        .then(async (response) => {
-          const data = await response.json();
-          if (!response.ok) {
-            throw new Error(data.error || "批量停止失败");
-          }
+      });
 
-          const succeeded = data.operated || 0;
-          const failed = data.failCount || 0;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "批量停止失败");
+      }
 
-          if (succeeded > 0) {
-            addToast({
-              title: "批量停止完成",
-              description: `成功停止 ${succeeded} 个实例${failed > 0 ? `，${failed} 个失败` : ""}`,
-              color: failed === 0 ? "success" : "warning",
-            });
-          }
+      const succeeded = data.operated || 0;
+      const failed = data.failCount || 0;
 
-          if (failed > 0 && data.results) {
-            const failedTunnels = data.results.filter((r: any) => !r.success);
-            console.error(
-              "停止失败的实例:",
-              failedTunnels.map((f: any) => `${f.name}: ${f.error}`)
-            );
-          }
+      // 显示结果toast
+      addToast({
+        title: "批量停止完成",
+        description: `成功停止 ${succeeded} 个实例${failed > 0 ? `，${failed} 个失败` : ""}`,
+        color: failed === 0 ? "success" : "warning",
+      });
 
-          // 刷新实例列表
-          fetchTunnels();
-          return { succeeded, failed };
-        })
-        .catch((error) => {
-          addToast({
-            title: "批量停止失败",
-            description: error instanceof Error ? error.message : "未知错误",
-            color: "danger",
-          });
-          throw error;
-        }),
-    });
+      if (failed > 0 && data.results) {
+        const failedTunnels = data.results.filter((r: any) => !r.success);
+        console.error(
+          "停止失败的实例:",
+          failedTunnels.map((f: any) => `${f.name}: ${f.error}`)
+        );
+      }
+
+      // 刷新实例列表
+      await fetchTunnels();
+    } catch (error) {
+      addToast({
+        title: "批量停止失败",
+        description: error instanceof Error ? error.message : "未知错误",
+        color: "danger",
+      });
+    }
   };
 
   // 执行批量重启
@@ -710,58 +705,55 @@ export default function TunnelsPage() {
       return;
     }
 
-    // 执行批量重启
+    // 显示进行中toast
     addToast({
-      timeout: 1,
       title: "批量重启中...",
       description: `正在重启 ${runningTunnels.length} 个实例，请稍候`,
       color: "primary",
-      promise: fetch(buildApiUrl("/api/tunnels/batch/action"), {
+    });
+
+    try {
+      const response = await fetch(buildApiUrl("/api/tunnels/batch/action"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ids: runningTunnels.map((t) => Number(t.id)),
           action: "restart",
         }),
-      })
-        .then(async (response) => {
-          const data = await response.json();
-          if (!response.ok) {
-            throw new Error(data.error || "批量重启失败");
-          }
+      });
 
-          const succeeded = data.operated || 0;
-          const failed = data.failCount || 0;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "批量重启失败");
+      }
 
-          if (succeeded > 0) {
-            addToast({
-              title: "批量重启完成",
-              description: `成功重启 ${succeeded} 个实例${failed > 0 ? `，${failed} 个失败` : ""}`,
-              color: failed === 0 ? "success" : "warning",
-            });
-          }
+      const succeeded = data.operated || 0;
+      const failed = data.failCount || 0;
 
-          if (failed > 0 && data.results) {
-            const failedTunnels = data.results.filter((r: any) => !r.success);
-            console.error(
-              "重启失败的实例:",
-              failedTunnels.map((f: any) => `${f.name}: ${f.error}`)
-            );
-          }
+      // 显示结果toast
+      addToast({
+        title: "批量重启完成",
+        description: `成功重启 ${succeeded} 个实例${failed > 0 ? `，${failed} 个失败` : ""}`,
+        color: failed === 0 ? "success" : "warning",
+      });
 
-          // 刷新实例列表
-          fetchTunnels();
-          return { succeeded, failed };
-        })
-        .catch((error) => {
-          addToast({
-            title: "批量重启失败",
-            description: error instanceof Error ? error.message : "未知错误",
-            color: "danger",
-          });
-          throw error;
-        }),
-    });
+      if (failed > 0 && data.results) {
+        const failedTunnels = data.results.filter((r: any) => !r.success);
+        console.error(
+          "重启失败的实例:",
+          failedTunnels.map((f: any) => `${f.name}: ${f.error}`)
+        );
+      }
+
+      // 刷新实例列表
+      await fetchTunnels();
+    } catch (error) {
+      addToast({
+        title: "批量重启失败",
+        description: error instanceof Error ? error.message : "未知错误",
+        color: "danger",
+      });
+    }
   };
 
   // 导出配置功能
@@ -1044,6 +1036,17 @@ export default function TunnelsPage() {
     fetchTags();
   }, []); // 空依赖数组，只在组件挂载时执行一次
 
+  // 搜索防抖处理
+  React.useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      setFilterValue(searchInput);
+    }, 500); // 500ms 防抖延迟
+
+    return () => {
+      clearTimeout(debounceTimer);
+    };
+  }, [searchInput]);
+
   // 监听过滤参数变化，重新获取数据（包括初始加载）
   React.useEffect(() => {
     fetchTunnels();
@@ -1256,15 +1259,16 @@ export default function TunnelsPage() {
 
   const onSearchChange = React.useCallback((value?: string) => {
     if (value) {
-      setFilterValue(value);
+      setSearchInput(value);
       setPage(1);
     } else {
-      setFilterValue("");
+      setSearchInput("");
     }
   }, []);
 
   const onClear = React.useCallback(() => {
-    setFilterValue("");
+    setSearchInput("");
+    setFilterValue(""); // 立即清空搜索结果
     setPage(1);
   }, []);
 
@@ -1363,7 +1367,7 @@ export default function TunnelsPage() {
 
   return (
     <>
-      <div className="p-4 md:p-0">
+      <div className="max-w-7xl py-6 mx-auto">
         {/* 标题栏 */}
         <div className="flex items-center justify-between mb-4">
           {/* 移动端布局 */}
@@ -1561,13 +1565,13 @@ export default function TunnelsPage() {
             {/* 搜索框 */}
             <Input
               placeholder="搜索实例"
-              value={filterValue}
+              value={searchInput}
               onValueChange={onSearchChange}
               startContent={
                 <FontAwesomeIcon icon={faSearch} className="text-default-400" />
               }
               endContent={
-                filterValue && (
+                searchInput && (
                   <Button
                     isIconOnly
                     variant="light"
@@ -1641,7 +1645,7 @@ export default function TunnelsPage() {
               {/* 搜索框 */}
               <Input
                 placeholder="搜索实例名称..."
-                value={filterValue}
+                value={searchInput}
                 onValueChange={onSearchChange}
                 startContent={
                   <FontAwesomeIcon
@@ -1650,7 +1654,7 @@ export default function TunnelsPage() {
                   />
                 }
                 endContent={
-                  filterValue && (
+                  searchInput && (
                     <Button
                       isIconOnly
                       variant="light"

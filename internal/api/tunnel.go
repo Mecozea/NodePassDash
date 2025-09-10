@@ -79,6 +79,9 @@ func SetupTunnelRoutes(rg *gin.RouterGroup, tunnelService *tunnel.Service, sseMa
 	// 新的统一 metrics 趋势接口 - 基于 ServiceHistory 表，使用 instanceId
 	rg.GET("/tunnels/:id/metrics-trend", tunnelMetricsHandler.HandleGetTunnelMetricsTrend)
 
+	// TCPing 诊断测试接口 - 基于 instanceId
+	rg.POST("/tunnels/:id/tcping", tunnelHandler.HandleTunnelTCPing)
+
 	// 隧道日志相关路由（使用dashboard路径但由tunnel handler处理）
 	rg.GET("/dashboard/operate_logs", tunnelHandler.HandleGetTunnelLogs)
 	rg.DELETE("/dashboard/operate_logs", tunnelHandler.HandleClearTunnelLogs)
@@ -3567,4 +3570,50 @@ func (h *TunnelHandler) HandleControlInstance(c *gin.Context) {
 
 	// 返回成功响应
 	c.JSON(http.StatusOK, map[string]bool{"success": true})
+}
+
+// HandleTunnelTCPing 隧道TCPing诊断测试 (POST /api/tunnels/{instanceId}/tcping)
+func (h *TunnelHandler) HandleTunnelTCPing(c *gin.Context) {
+	instanceID := c.Param("id")
+	if instanceID == "" {
+		c.String(http.StatusBadRequest, "Missing instanceId parameter")
+		return
+	}
+
+	// 解析请求体
+	var req struct {
+		Target string `json:"target"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.String(http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if req.Target == "" {
+		c.String(http.StatusBadRequest, "Missing target parameter")
+		return
+	}
+
+	// 根据实例ID获取对应的端点ID
+	endpointID, err := h.tunnelService.GetEndpointIDByInstanceID(instanceID)
+	if err != nil {
+		log.Errorf("[API]根据实例ID获取端点ID失败: instanceID=%s, err=%v", instanceID, err)
+		c.String(http.StatusNotFound, "Tunnel instance not found")
+		return
+	}
+
+	// 调用NodePass的TCPing接口
+	result, err := nodepass.TCPing(endpointID, req.Target)
+	if err != nil {
+		log.Errorf("[API]隧道TCPing测试失败: instanceID=%s, target=%s, err=%v", instanceID, req.Target, err)
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// 返回结果
+	response := map[string]interface{}{
+		"success": true,
+		"result":  result,
+	}
+	c.JSON(http.StatusOK, response)
 }

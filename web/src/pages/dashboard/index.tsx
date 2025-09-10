@@ -36,7 +36,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faRocket,
   faPlay,
-  faUnlink,
   faStop,
   faExclamationTriangle,
   faRecycle
@@ -426,9 +425,24 @@ export default function DashboardPage() {
   return (
     <div className={cn("space-y-4 md:space-y-6 p-4 md:p-0", fontSans.className)}>
       {/* 顶部统计卡片 - 从tunnels页面移过来的5个统计卡片 */}
+      {/* 
+        ⚠️ 渐变效果差异问题说明:
+        - Vite版本与Next.js版本的渐变透明度效果存在微妙差异
+        - 原因可能包括:
+          1. Tailwind CSS v4 vs v3的渐变处理机制不同
+          2. HeroUI组件在不同环境下的基础样式差异 (outline-solid vs bg-content1)
+          3. CSS变量解析和透明度计算的细微差别
+        - 当前通过classNames.base覆盖了基础样式，但渐变效果仍有差异
+        - 需要进一步调试CSS变量和透明度渲染机制
+      */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card 
+          // ⚠️ 渐变样式: from-primary-50 to-primary-100/50 在Vite版本中透明度渲染效果与Next.js不一致
           className="p-3 md:p-4 bg-gradient-to-br from-primary-50 to-primary-100/50 dark:from-primary-900/20 dark:to-primary-900/10 cursor-pointer transition-transform hover:scale-[1.02]"
+          classNames={{
+            // 手动覆盖HeroUI基础样式以匹配Next.js版本的outline和transition行为
+            base: "bg-content1 outline-none transition-transform-background motion-reduce:transition-none"
+          }}
           isPressable
           onPress={() => navigate("/tunnels")}
         >
@@ -439,7 +453,7 @@ export default function DashboardPage() {
                 <span className="text-xl md:text-2xl font-semibold text-primary">{loading ? "--" : tunnelStats.total}</span>
               </div>
               <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-primary/10 text-primary">
-                <FontAwesomeIcon icon={faRocket} className="w-5 h-5 md:w-6 md:h-6" />
+                <FontAwesomeIcon icon={faRocket} className="!w-6 !h-6" style={{ width: '24px', height: '24px' }} />
               </div>
             </div>
           </CardBody>
@@ -447,6 +461,9 @@ export default function DashboardPage() {
 
         <Card 
           className="p-3 md:p-4 bg-gradient-to-br from-success-50 to-success-100/50 dark:from-success-900/20 dark:to-success-900/10 cursor-pointer transition-transform hover:scale-[1.02]"
+          classNames={{
+            base: "bg-content1 outline-none transition-transform-background motion-reduce:transition-none"
+          }}
           isPressable
           onPress={() => navigate("/tunnels")}
         >
@@ -457,7 +474,7 @@ export default function DashboardPage() {
                 <span className="text-xl md:text-2xl font-semibold text-success">{loading ? "--" : tunnelStats.running}</span>
               </div>
               <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-success/10 text-success">
-                <FontAwesomeIcon icon={faPlay} className="w-5 h-5 md:w-6 md:h-6" />
+                <FontAwesomeIcon icon={faPlay} className="!w-6 !h-6" style={{ width: '24px', height: '24px' }} />
               </div>
             </div>
           </CardBody>
@@ -465,6 +482,9 @@ export default function DashboardPage() {
 
         <Card 
           className="p-3 md:p-4 bg-gradient-to-br from-danger-50 to-danger-100/50 dark:from-danger-900/20 dark:to-danger-900/10 cursor-pointer transition-transform hover:scale-[1.02]"
+          classNames={{
+            base: "bg-content1 outline-none transition-transform-background motion-reduce:transition-none"
+          }}
           isPressable
           onPress={() => navigate("/tunnels")}
         >
@@ -475,7 +495,7 @@ export default function DashboardPage() {
                 <span className="text-xl md:text-2xl font-semibold text-danger">{loading ? "--" : tunnelStats.stopped}</span>
               </div>
               <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-danger/10 text-danger">
-                <FontAwesomeIcon icon={faStop} className="w-5 h-5 md:w-6 md:h-6" />
+                <FontAwesomeIcon icon={faStop} className="!w-6 !h-6" style={{ width: '24px', height: '24px' }} />
               </div>
             </div>
           </CardBody>
@@ -483,6 +503,9 @@ export default function DashboardPage() {
 
         <Card 
           className="p-3 md:p-4 bg-gradient-to-br from-warning-50 to-warning-100/50 dark:from-warning-900/20 dark:to-warning-900/10 cursor-pointer transition-transform hover:scale-[1.02]"
+          classNames={{
+            base: "bg-content1 outline-none transition-transform-background motion-reduce:transition-none"
+          }}
           isPressable
           onPress={() => navigate("/tunnels")}
         >
@@ -493,7 +516,7 @@ export default function DashboardPage() {
                 <span className="text-xl md:text-2xl font-semibold text-warning">{loading ? "--" : tunnelStats.error}</span>
               </div>
               <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-warning/10 text-warning">
-                <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5 md:w-6 md:h-6" />
+                <FontAwesomeIcon icon={faExclamationTriangle} className="!w-6 !h-6" style={{ width: '24px', height: '24px' }} />
               </div>
             </div>
           </CardBody>
@@ -501,6 +524,9 @@ export default function DashboardPage() {
 
         <Card 
           className="p-3 md:p-4 bg-gradient-to-br from-default-50 to-default-100/50 dark:from-default-900/20 dark:to-default-900/10 cursor-pointer transition-transform hover:scale-[1.02]"
+          classNames={{
+            base: "bg-content1 outline-none transition-transform-background motion-reduce:transition-none"
+          }}
           isPressable
           onPress={() => navigate("/tunnels")}
         >
@@ -510,8 +536,8 @@ export default function DashboardPage() {
                 <span className="text-default-600 text-xs md:text-sm">已离线</span>
                 <span className="text-xl md:text-2xl font-semibold text-default-600">{loading ? "--" : tunnelStats.offline}</span>
               </div>
-              <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-default-500/10 text-default-600">
-                <FontAwesomeIcon icon={faUnlink} className="w-5 h-5 md:w-6 md:h-6" />
+              <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-default/10 text-default-600">
+                <FontAwesomeIcon icon={faRecycle} className="!w-6 !h-6" style={{ width: '24px', height: '24px' }} />
               </div>
             </div>
           </CardBody>

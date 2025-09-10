@@ -1,9 +1,16 @@
 import type { ButtonProps, CardProps } from "@heroui/react";
 import React from "react";
 import { ResponsiveContainer, PieChart, Pie, Tooltip, Cell, Label } from "recharts";
-import { Card, cn } from "@heroui/react";
+import {
+  Card,
+  Button,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+  cn,
+} from "@heroui/react";
 import { Icon } from "@iconify/react";
-import { fontSans } from "@/config/fonts";
 
 type ChartData = {
   name: string;
@@ -139,6 +146,30 @@ export const TodayTrafficChart = React.forwardRef<
             <dt>
               <h3 className="text-small text-foreground font-medium">{title}</h3>
             </dt>
+            <div className="flex items-center justify-end gap-x-2">
+              {/* <Dropdown
+                classNames={{
+                  content: "min-w-[120px]",
+                }}
+                placement="bottom-end"
+              >
+                <DropdownTrigger>
+                  <Button isIconOnly radius="full" size="sm" variant="light">
+                    <Icon height={16} icon="solar:menu-dots-bold" width={16} />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  itemClasses={{
+                    title: "text-tiny",
+                  }}
+                  variant="flat"
+                >
+                  <DropdownItem key="view-details">查看详情</DropdownItem>
+                  <DropdownItem key="export-data">导出数据</DropdownItem>
+                  <DropdownItem key="set-alert">设置告警</DropdownItem>
+                </DropdownMenu>
+              </Dropdown> */}
+            </div>
           </div>
           <dd className="flex items-baseline gap-x-1">
             <span className="text-default-900 text-3xl font-semibold">{value}</span>
@@ -150,7 +181,7 @@ export const TodayTrafficChart = React.forwardRef<
           height="100%"
           width="100%"
         >
-          <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+          <PieChart accessibilityLayer margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
             <Tooltip
               content={({ label, payload }) => (
                 <div className="rounded-medium bg-background text-tiny shadow-small flex h-8 min-w-[120px] items-center gap-x-2 px-1">

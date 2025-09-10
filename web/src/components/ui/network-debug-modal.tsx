@@ -366,12 +366,13 @@ export default function NetworkDebugModal({
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.result) {
+        // 接口现在直接返回结果对象，不再包装在 result 字段中
+        if (data.timestamp !== undefined) {
           return {
-            timestamp: data.result.timestamp,
-            success: data.result.success,
-            latency: data.result.latency,
-            error: data.result.error,
+            timestamp: data.timestamp,
+            success: data.success,
+            latency: data.latency,
+            error: data.error,
           };
         } else {
           return {

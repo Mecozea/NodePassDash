@@ -503,18 +503,14 @@ export default function TemplatesPage() {
                 : 'border-default-200'
             }`}
           >
-                         <CardBody className="p-6">
+            <CardBody className="p-6">
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
                  mode.color === 'primary' ? 'bg-primary bg-opacity-10' :
                  mode.color === 'success' ? 'bg-success bg-opacity-10' :
                  mode.color === 'secondary' ? 'bg-secondary bg-opacity-10' : 'bg-default bg-opacity-10'
                }`}>
-                 <FontAwesomeIcon icon={mode.icon} className={`text-xl ${
-                   mode.color === 'primary' ? 'text-primary' :
-                   mode.color === 'success' ? 'text-success' :
-                   mode.color === 'secondary' ? 'text-secondary' : 'text-default'
-                 }`} />
+                 <FontAwesomeIcon icon={mode.icon}  />
                </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold mb-1">{mode.title}</h3>

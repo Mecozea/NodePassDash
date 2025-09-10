@@ -80,7 +80,8 @@ export function QuickEntryCard() {
             >
               <FontAwesomeIcon 
                 icon={action.icon} 
-                className="w-5 h-5" 
+                className="!w-5 !h-5" 
+                style={{ width: '20px', height: '20px' }}
               />
             </Button>
           ))}
