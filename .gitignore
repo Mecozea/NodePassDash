@@ -75,16 +75,10 @@ bin/
 *.out
 *.test
 *.so
-web/
 # IDE
 .idea/
 .vscode/
-web/.vscode
-web/.idea
-web/.claude
-.vscode
 .claude
-.idea
 # Docker
 nodepass-release.*
 .ignore

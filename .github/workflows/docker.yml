@@ -82,8 +82,8 @@ jobs:
           labels: |
             org.opencontainers.image.version=${{ steps.get_version.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.title=NodePass Dashboard
-            org.opencontainers.image.description=NodePass Dashboard - 隧道管理面板
+            org.opencontainers.image.title=NodePassDash
+            org.opencontainers.image.description=NodePassDash - 隧道管理面板
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
 
