@@ -50,6 +50,7 @@ func SetupEndpointRoutes(rg *gin.RouterGroup, endpointService *endpoint.Service,
 	rg.DELETE("/endpoints/:id", endpointHandler.HandleDeleteEndpoint)
 	rg.PATCH("/endpoints/:id", endpointHandler.HandlePatchEndpoint)
 	rg.PATCH("/endpoints", endpointHandler.HandlePatchEndpoint)
+	rg.POST("/endpoints/:id/reset-key", endpointHandler.HandleResetApiKey)
 	rg.GET("/endpoints/simple", endpointHandler.HandleGetSimpleEndpoints)
 	rg.POST("/endpoints/test", endpointHandler.HandleTestEndpoint)
 	rg.GET("/endpoints/status", endpointHandler.HandleEndpointStatus)
@@ -61,6 +62,7 @@ func SetupEndpointRoutes(rg *gin.RouterGroup, endpointService *endpoint.Service,
 	rg.GET("/endpoints/:id/stats", endpointHandler.HandleEndpointStats)
 	rg.POST("/endpoints/:id/tcping", endpointHandler.HandleTCPing)
 	rg.POST("/endpoints/:id/network-debug", endpointHandler.HandleNetworkDebug)
+	rg.POST("/endpoints/:id/test-connection", endpointHandler.HandleTestConnection)
 
 	// 全局回收站
 	rg.GET("/recycle", endpointHandler.HandleRecycleListAll)
@@ -369,6 +371,37 @@ func (h *EndpointHandler) HandlePatchEndpoint(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusOK, endpoint.EndpointResponse{Success: true, Message: "隧道刷新完成"})
+	case "updateConfig":
+		// 修改配置：直接更新配置和缓存，SSE会自动使用新的缓存配置
+		var req endpoint.UpdateEndpointRequest
+		req.ID = id
+		req.Action = "updateConfig"
+
+		// 从body中获取参数
+		if name, ok := body["name"].(string); ok {
+			req.Name = strings.TrimSpace(name)
+		}
+		if url, ok := body["url"].(string); ok {
+			req.URL = strings.TrimSpace(url)
+			// 从完整URL中分离baseURL和apiPath
+			if parsedURL := h.parseFullURL(req.URL); parsedURL != nil {
+				req.URL = parsedURL.BaseURL
+				req.APIPath = parsedURL.APIPath
+			}
+		}
+		if apiKey, ok := body["apiKey"].(string); ok {
+			req.APIKey = strings.TrimSpace(apiKey)
+		}
+
+		// 更新数据库配置（UpdateEndpoint内部会自动更新缓存）
+		updatedEndpoint, err := h.endpointService.UpdateEndpoint(req)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, endpoint.EndpointResponse{Success: false, Error: err.Error()})
+			return
+		}
+
+		log.Infof("[Master-%v] 配置更新成功，缓存已更新: URL=%s, APIPath=%s", id, updatedEndpoint.URL, updatedEndpoint.APIPath)
+		c.JSON(http.StatusOK, endpoint.EndpointResponse{Success: true, Message: "配置更新成功"})
 	default:
 		c.JSON(http.StatusBadRequest, endpoint.EndpointResponse{Success: false, Error: "不支持的操作类型"})
 	}
@@ -1761,7 +1794,7 @@ func (h *EndpointHandler) HandleNetworkDebug(c *gin.Context) {
 		return
 	}
 
-	// 调用NodePass的单次TCPing接口
+	// 调用NodePass的单次TCPing接口（现在使用Resty实现）
 	result, err := nodepass.SingleTCPing(endpointID, req.Target)
 	if err != nil {
 		log.Errorf("[API]网络诊断测试失败: target=%s, err=%v", req.Target, err)
@@ -1771,4 +1804,163 @@ func (h *EndpointHandler) HandleNetworkDebug(c *gin.Context) {
 
 	// 直接返回 singleResult
 	c.JSON(http.StatusOK, result)
+}
+
+// HandleResetApiKey 重置API密钥 (POST /api/endpoints/{id}/reset-key)
+func (h *EndpointHandler) HandleResetApiKey(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, endpoint.EndpointResponse{
+			Success: false,
+			Error:   "无效的端点ID",
+		})
+		return
+	}
+
+	// 获取端点信息
+	ep, err := h.endpointService.GetEndpointByID(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, endpoint.EndpointResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	log.Infof("[Master-%v] 开始重置API密钥", id)
+
+	// 1. 调用NodePass API重置密钥
+	newAPIKey, err := h.resetNodePassAPIKey(id, ep)
+	if err != nil {
+		log.Errorf("[Master-%v] 调用NodePass重置密钥失败: %v", id, err)
+		c.JSON(http.StatusInternalServerError, endpoint.EndpointResponse{
+			Success: false,
+			Error:   "重置密钥失败: " + err.Error(),
+		})
+		return
+	}
+
+	// 2. 更新数据库中的API密钥（UpdateEndpoint内部会自动更新缓存）
+	updateReq := endpoint.UpdateEndpointRequest{
+		ID:     id,
+		Action: "updateApiKey",
+		APIKey: newAPIKey,
+	}
+
+	_, err = h.endpointService.UpdateEndpoint(updateReq)
+	if err != nil {
+		log.Errorf("[Master-%v] 更新数据库中的新密钥失败: %v", id, err)
+		c.JSON(http.StatusInternalServerError, endpoint.EndpointResponse{
+			Success: false,
+			Error:   "更新新密钥失败: " + err.Error(),
+		})
+		return
+	}
+
+	log.Infof("[Master-%v] API密钥重置成功，缓存已更新: %v", id, newAPIKey)
+
+	c.JSON(http.StatusOK, endpoint.EndpointResponse{
+		Success: true,
+		Message: "API密钥重置成功",
+	})
+}
+
+// resetNodePassAPIKey 调用NodePass API重置密钥
+func (h *EndpointHandler) resetNodePassAPIKey(endpointID int64, ep *endpoint.Endpoint) (string, error) {
+	// NodePass重置密钥需要调用nodepass.PatchInstance方法，传递instanceID="********"和action="restart"
+	// 根据注释，重置后的新密钥会在返回的result.url字段中
+
+	log.Infof("[Master-%v] 调用NodePass PatchInstance重置密钥，instanceID=********", endpointID)
+
+	// 构造patchBody，注意字段是小写的unexported字段，我们需要通过现有的方法来调用
+	// 使用现有的ControlInstance方法，它内部会构造正确的patchBody
+	result, err := nodepass.ControlInstance(endpointID, "********", "restart")
+	log.Infof("[Master-%v] NodePass PatchInstance重置密钥结果: %+v", endpointID, result)
+	if err != nil {
+		return "", fmt.Errorf("调用PatchInstance失败: %v", err)
+	}
+
+	// 从返回结果中获取新的API密钥（在URL字段中）
+	if result.URL == "" {
+		return "", fmt.Errorf("NodePass未返回新的API密钥")
+	}
+
+	log.Infof("[Master-%v] NodePass重置密钥成功，获得新密钥", endpointID)
+	return result.URL, nil
+}
+
+// parseFullURL 从完整URL中分离baseURL和apiPath
+func (h *EndpointHandler) parseFullURL(fullURL string) *struct {
+	BaseURL string
+	APIPath string
+} {
+	// 使用正则表达式解析 protocol://host:port/path 格式
+	// 例如：https://example.com:8080/api/v1 -> baseURL: https://example.com:8080, apiPath: /api/v1
+	if fullURL == "" {
+		return nil
+	}
+
+	// 查找第三个/的位置，它分隔baseURL和path
+	slashCount := 0
+	splitIndex := -1
+	for i, char := range fullURL {
+		if char == '/' {
+			slashCount++
+			if slashCount == 3 {
+				splitIndex = i
+				break
+			}
+		}
+	}
+
+	if splitIndex == -1 {
+		// 没有找到path部分，使用默认/api
+		return &struct {
+			BaseURL string
+			APIPath string
+		}{
+			BaseURL: fullURL,
+			APIPath: "/api",
+		}
+	}
+
+	baseURL := fullURL[:splitIndex]
+	apiPath := fullURL[splitIndex:]
+	if apiPath == "" {
+		apiPath = "/api"
+	}
+
+	return &struct {
+		BaseURL string
+		APIPath string
+	}{
+		BaseURL: baseURL,
+		APIPath: apiPath,
+	}
+}
+
+// HandleTestConnection 测试端点连接 (POST /api/endpoints/{id}/test-connection)
+func (h *EndpointHandler) HandleTestConnection(c *gin.Context) {
+	endpointIDStr := c.Param("id")
+	endpointID, err := strconv.ParseInt(endpointIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid endpoint ID"})
+		return
+	}
+
+	// 调用nodepass client的测试连接方法（现在使用Resty实现）
+	if err := nodepass.TestConnection(endpointID); err != nil {
+		log.Errorf("[API]测试端点连接失败: endpointID=%d, err=%v", endpointID, err)
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "连接测试成功",
+	})
 }

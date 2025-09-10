@@ -38,7 +38,7 @@ import {
   faPlay,
   faStop,
   faExclamationTriangle,
-  faRecycle
+  faRecycle,faUnlink
 } from "@fortawesome/free-solid-svg-icons";
 import { TrafficOverviewChart } from "@/components/ui/traffic-overview-chart";
 import { TodayTrafficChart } from "../../components/ui/today-traffic-chart";
@@ -537,7 +537,7 @@ export default function DashboardPage() {
                 <span className="text-xl md:text-2xl font-semibold text-default-600">{loading ? "--" : tunnelStats.offline}</span>
               </div>
               <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-default/10 text-default-600">
-                <FontAwesomeIcon icon={faRecycle} className="!w-6 !h-6" style={{ width: '24px', height: '24px' }} />
+                <FontAwesomeIcon icon={faUnlink} className="!w-6 !h-6" style={{ width: '24px', height: '24px' }} />
               </div>
             </div>
           </CardBody>

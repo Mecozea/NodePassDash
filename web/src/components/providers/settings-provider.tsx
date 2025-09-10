@@ -20,7 +20,7 @@ interface Settings {
 const defaultSettings: Settings = {
   theme: 'system',
   isBeginnerMode: false,
-  isPrivacyMode: false,
+  isPrivacyMode: true,
   isExperimentalMode: false,
   autoCheckUpdates: false,
   updateCheckFrequency: 'weekly',

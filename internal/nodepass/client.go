@@ -1,89 +1,69 @@
 package nodepass
 
 import (
-	"bytes"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"sync"
 	"time"
 
-	// 引入系统代理检测 (Windows/macOS)
-	"github.com/mattn/go-ieproxy"
+	"github.com/go-resty/resty/v2"
 )
 
-// 全局 HTTP 客户端，只初始化一次
-var (
-	globalHTTPClient *http.Client
-	httpClientOnce   sync.Once
-)
-
-// createGlobalHTTPClient 获取全局 HTTP 客户端，确保只初始化一次
-func createGlobalHTTPClient() *http.Client {
-	httpClientOnce.Do(func() {
-		// 复制默认 Transport 并禁用证书校验，以支持自建/自签名 SSL
-		tr := http.DefaultTransport.(*http.Transport).Clone()
-		// 启用系统/环境代理检测：先读 env，再回退到系统代理
-		tr.Proxy = ieproxy.GetProxyFunc()
-		if tr.TLSClientConfig == nil {
-			tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		} else {
-			tr.TLSClientConfig.InsecureSkipVerify = true
-		}
-		globalHTTPClient = &http.Client{
-			Timeout:   15 * time.Second,
-			Transport: tr,
-		}
-	})
-	return globalHTTPClient
+// 创建 Resty 客户端，配置禁用代理和证书校验
+func createRestyClient() *resty.Client {
+	client := resty.New().
+		SetTimeout(15 * time.Second).
+		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+	
+	// 明确禁用所有代理设置
+	client.SetProxy("")
+	client.RemoveProxy()
+	
+	return client
 }
 
-// buildClient 获取客户端的 HTTP 客户端，如果为空则使用全局客户端
-func getClient() *http.Client {
-	if globalHTTPClient == nil {
-		createGlobalHTTPClient()
-	}
-	return globalHTTPClient
-}
-
-// request 执行 HTTP 请求的通用方法
+// request 执行 HTTP 请求的通用方法，使用 Resty 客户端
 func request(method, url, apiKey string, body interface{}, dest interface{}) error {
-	var buf *bytes.Buffer
+	client := createRestyClient()
+	req := client.R().
+		SetHeader("X-API-Key", apiKey)
+
+	// 设置请求体
 	if body != nil {
-		data, err := json.Marshal(body)
-		if err != nil {
-			return err
-		}
-		buf = bytes.NewBuffer(data)
-	} else {
-		buf = &bytes.Buffer{}
+		req.SetBody(body)
 	}
 
-	req, err := http.NewRequest(method, url, buf)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("X-API-Key", apiKey)
-	if method != http.MethodGet && method != http.MethodDelete {
-		req.Header.Set("Content-Type", "application/json")
-	}
-
-	resp, err := getClient().Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("NodePass API 返回错误: %d", resp.StatusCode)
-	}
-
+	// 设置响应结构
 	if dest != nil {
-		if err := json.NewDecoder(resp.Body).Decode(dest); err != nil {
-			return err
-		}
+		req.SetResult(dest)
 	}
+
+	// 执行请求
+	var resp *resty.Response
+	var err error
+
+	switch method {
+	case "GET":
+		resp, err = req.Get(url)
+	case "POST":
+		resp, err = req.Post(url)
+	case "PUT":
+		resp, err = req.Put(url)
+	case "PATCH":
+		resp, err = req.Patch(url)
+	case "DELETE":
+		resp, err = req.Delete(url)
+	default:
+		return fmt.Errorf("不支持的 HTTP 方法: %s", method)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return fmt.Errorf("NodePass API 返回错误: %d", resp.StatusCode())
+	}
+
 	return nil
 }
 
@@ -92,7 +72,7 @@ func GetInstances(endpointID int64) ([]InstanceResult, error) {
 	baseURL, apiKey, _ := GetCache().Get(fmt.Sprintf("%d", endpointID))
 	// 创建临时客户端来执行请求
 	var resp []InstanceResult
-	if err := request(http.MethodGet, fmt.Sprintf("%s/instances", baseURL), apiKey, nil, &resp); err != nil {
+	if err := request("GET", fmt.Sprintf("%s/instances", baseURL), apiKey, nil, &resp); err != nil {
 		return nil, err
 	}
 	return resp, nil
@@ -102,7 +82,7 @@ func GetInstances(endpointID int64) ([]InstanceResult, error) {
 func GetInstance(endpointID int64, instanceID string) (*InstanceResult, error) {
 	baseURL, apiKey, _ := GetCache().Get(fmt.Sprintf("%d", endpointID))
 	var resp InstanceResult
-	if err := request(http.MethodGet, fmt.Sprintf("%s/instances/%s", baseURL, instanceID), apiKey, nil, &resp); err != nil {
+	if err := request("GET", fmt.Sprintf("%s/instances/%s", baseURL, instanceID), apiKey, nil, &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil
@@ -115,7 +95,7 @@ func CreateInstance(endpointID int64, commandLine string) (InstanceResult, error
 	payload := map[string]string{"url": commandLine}
 
 	var resp InstanceResult
-	if err := request(http.MethodPost, fmt.Sprintf("%s/instances", baseURL), apiKey, payload, &resp); err != nil {
+	if err := request("POST", fmt.Sprintf("%s/instances", baseURL), apiKey, payload, &resp); err != nil {
 		return resp, err
 	}
 	return resp, nil
@@ -124,7 +104,7 @@ func CreateInstance(endpointID int64, commandLine string) (InstanceResult, error
 // DeleteInstance 删除指定实例
 func DeleteInstance(endpointID int64, instanceID string) error {
 	baseURL, apiKey, _ := GetCache().Get(fmt.Sprintf("%d", endpointID))
-	return request(http.MethodDelete, fmt.Sprintf("%s/instances/%s", baseURL, instanceID), apiKey, nil, nil)
+	return request("DELETE", fmt.Sprintf("%s/instances/%s", baseURL, instanceID), apiKey, nil, nil)
 }
 
 // UpdateInstance 更新指定实例的命令行 (PUT /instances/{id})
@@ -132,7 +112,7 @@ func UpdateInstance(endpointID int64, instanceID, commandLine string) (InstanceR
 	payload := map[string]string{"url": commandLine}
 	baseURL, apiKey, _ := GetCache().Get(fmt.Sprintf("%d", endpointID))
 	var resp InstanceResult
-	if err := request(http.MethodPut, fmt.Sprintf("%s/instances/%s", baseURL, instanceID), apiKey, payload, &resp); err != nil {
+	if err := request("PUT", fmt.Sprintf("%s/instances/%s", baseURL, instanceID), apiKey, payload, &resp); err != nil {
 		return resp, err
 	}
 	return resp, nil
@@ -143,7 +123,7 @@ func PatchInstance(endpointID int64, instanceID string, body patchBody) (Instanc
 	var resp InstanceResult
 
 	baseURL, apiKey, _ := GetCache().Get(fmt.Sprintf("%d", endpointID))
-	if err := request(http.MethodPatch, fmt.Sprintf("%s/instances/%s", baseURL, instanceID), apiKey, body, &resp); err != nil {
+	if err := request("PATCH", fmt.Sprintf("%s/instances/%s", baseURL, instanceID), apiKey, body, &resp); err != nil {
 		return resp, err
 	}
 	return resp, nil
@@ -152,7 +132,7 @@ func PatchInstance(endpointID int64, instanceID string, body patchBody) (Instanc
 // ControlInstance 对实例执行 start/stop/restart 操作，返回最新状态
 func ControlInstance(endpointID int64, instanceID, action string) (InstanceResult, error) {
 	body := patchBody{
-		action: action,
+		Action: action,
 	}
 	return PatchInstance(endpointID, instanceID, body)
 }
@@ -160,7 +140,7 @@ func ControlInstance(endpointID int64, instanceID, action string) (InstanceResul
 // PatchInstance 更新指定实例的别名 (PATCH /instances/{id})
 func RenameInstance(endpointID int64, instanceID string, name string) (InstanceResult, error) {
 	body := patchBody{
-		alias: name,
+		Alias: name,
 	}
 	return PatchInstance(endpointID, instanceID, body)
 }
@@ -168,7 +148,7 @@ func RenameInstance(endpointID int64, instanceID string, name string) (InstanceR
 // PatchInstance 更新指定实例的重启策略 (PATCH /instances/{id})
 func SetRestartInstance(endpointID int64, instanceID string, restart bool) (InstanceResult, error) {
 	body := patchBody{
-		restart: restart,
+		Restart: restart,
 	}
 	return PatchInstance(endpointID, instanceID, body)
 }
@@ -176,7 +156,7 @@ func SetRestartInstance(endpointID int64, instanceID string, restart bool) (Inst
 // ResetInstanceTraffic 重置指定实例的流量统计 (PATCH /instances/{id})
 func ResetTraffic(endpointID int64, instanceID string) (InstanceResult, error) {
 	body := patchBody{
-		action: "reset",
+		Action: "reset",
 	}
 	return PatchInstance(endpointID, instanceID, body)
 }
@@ -188,7 +168,7 @@ func GetInfo(endpointID int64) (*EndpointInfoResult, error) {
 
 	// 创建临时客户端来执行请求
 
-	if err := request(http.MethodGet, fmt.Sprintf("%s/info", baseURL), apiKey, nil, &resp); err != nil {
+	if err := request("GET", fmt.Sprintf("%s/info", baseURL), apiKey, nil, &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil
@@ -224,7 +204,7 @@ func TCPing(endpointID int64, target string) (*TCPingResult, error) {
 		}
 
 		// 使用超时客户端进行请求
-		if err := request(http.MethodGet, fmt.Sprintf("%s/tcping?target=%s", baseURL, target), apiKey, nil, &singleResult); err != nil {
+		if err := request("GET", fmt.Sprintf("%s/tcping?target=%s", baseURL, target), apiKey, nil, &singleResult); err != nil {
 			// 网络请求失败或超时，算作丢包
 			errors = append(errors, err.Error())
 			continue
@@ -304,7 +284,7 @@ func SingleTCPing(endpointID int64, target string) (*NetworkDebugResult, error) 
 	}
 
 	// 使用超时客户端进行请求
-	if err := request(http.MethodGet, fmt.Sprintf("%s/tcping?target=%s", baseURL, target), apiKey, nil, &singleResult); err != nil {
+	if err := request("GET", fmt.Sprintf("%s/tcping?target=%s", baseURL, target), apiKey, nil, &singleResult); err != nil {
 		// 网络请求失败或超时
 		return &NetworkDebugResult{
 			Timestamp: timestamp,
@@ -321,6 +301,15 @@ func SingleTCPing(endpointID int64, target string) (*NetworkDebugResult, error) 
 		Latency:   singleResult.Latency,
 		Error:     singleResult.Error,
 	}, nil
+}
+
+// TestConnection 测试端点连接
+func TestConnection(endpointID int64) error {
+	baseURL, apiKey, _ := GetCache().Get(fmt.Sprintf("%d", endpointID))
+	
+	// 测试获取实例列表以验证连接
+	err := request("GET", fmt.Sprintf("%s/instances", baseURL), apiKey, nil, nil)
+	return err
 }
 
 //go:generate stringer -type=Instance
@@ -343,9 +332,9 @@ type InstanceResult struct {
 }
 
 type patchBody struct {
-	restart bool   `json:"restart,omitempty"`
-	action  string `json:"action,omitempty"` // start|stop|restart|reset
-	alias   string `json:"alias,omitempty"`
+	Restart bool   `json:"restart,omitempty"`
+	Action  string `json:"action,omitempty"` // start|stop|restart|reset
+	Alias   string `json:"alias,omitempty"`
 }
 
 // EndpointInfoResult NodePass实例的系统信息
