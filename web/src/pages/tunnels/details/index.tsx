@@ -100,7 +100,7 @@ interface TunnelInfo {
     restart: boolean; // 添加 restart 字段
     certPath?: string; // TLS证书路径
     keyPath?: string; // TLS密钥路径
-    mode?: string; // 隧道模式 (0, 1, 2)
+    mode?: number | null; // 隧道模式 (0, 1, 2)
     read?: string; // 读取配置
     rate?: string; // 速率限制配置
   };
@@ -227,31 +227,33 @@ const getTLSModeText = (tlsValue: string): string => {
 };
 
 // 将隧道模式数字转换为对应的模式文案
-const getTunnelModeText = (type: string, modeValue: string): string => {
+const getTunnelModeText = (type: string, modeValue?: number | null): string => {
+  if (modeValue == null) return "未设置";
+  
   if (type === "client") {
     switch (modeValue) {
-      case "0":
+      case 0:
         return "自动模式";
-      case "1":
+      case 1:
         return "单端转发";
-      case "2":
-        return "强制正向";
+      case 2:
+        return "双端转发";
       default:
-        return modeValue || "未设置";
+        return `未知模式(${modeValue})`;
     }
   } else if (type === "server") {
     switch (modeValue) {
-      case "0":
+      case 0:
         return "自动检测";
-      case "1":
+      case 1:
         return "强制反向";
-      case "2":
+      case 2:
         return "强制正向";
       default:
-        return modeValue || "未设置";
+        return `未知模式(${modeValue})`;
     }
   }
-  return modeValue || "未设置";
+  return `未知模式(${modeValue})`;
 };
 
 // 添加流量历史记录类型
@@ -1676,7 +1678,7 @@ export default function TunnelDetailPage() {
                       <div className="flex items-center gap-2">
                         {tunnelInfo.instanceId}
                         {/* 新增字段显示 */}
-                        {tunnelInfo.config.mode && (
+                        {tunnelInfo.config.mode != null && (
                           <Chip variant="flat" color="secondary" size="sm">
                             {getTunnelModeText(
                               tunnelInfo.type,
