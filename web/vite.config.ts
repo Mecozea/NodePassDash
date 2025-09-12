@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
-import tailwindcss from "@tailwindcss/vite";
 import { readFileSync } from "fs";
 
 // 读取package.json获取版本号
@@ -9,7 +8,7 @@ const packageJson = JSON.parse(readFileSync("./package.json", "utf-8"));
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), tsconfigPaths(), tailwindcss()],
+  plugins: [react(), tsconfigPaths()],
   define: {
     __APP_VERSION__: JSON.stringify(packageJson.version),
     __DEV_MODE__: JSON.stringify(mode === 'development'),

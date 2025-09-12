@@ -1,12 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
 
-/* @layer theme, base, components, utilities; */
-@import "tailwindcss";
-/* @plugin './hero.ts'; */
-/* Note: You may need to change the path to fit your project structure */
-/* @custom-variant dark (&:is(.dark *)); */
-/* Note: You may need to change the path to fit your project structure */
-@config "../../tailwind.config.js";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* 仅为仪表盘统计卡片定义字体变量 */
 :root {

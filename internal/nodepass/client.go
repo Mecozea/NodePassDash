@@ -13,11 +13,11 @@ func createRestyClient() *resty.Client {
 	client := resty.New().
 		SetTimeout(15 * time.Second).
 		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
-	
+
 	// 明确禁用所有代理设置
 	client.SetProxy("")
 	client.RemoveProxy()
-	
+
 	return client
 }
 
@@ -306,7 +306,7 @@ func SingleTCPing(endpointID int64, target string) (*NetworkDebugResult, error) 
 // TestConnection 测试端点连接
 func TestConnection(endpointID int64) error {
 	baseURL, apiKey, _ := GetCache().Get(fmt.Sprintf("%d", endpointID))
-	
+
 	// 测试获取实例列表以验证连接
 	err := request("GET", fmt.Sprintf("%s/instances", baseURL), apiKey, nil, nil)
 	return err
