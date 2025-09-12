@@ -1,9 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+@import "tailwindcss";
+/* Note: You may need to change the path to fit your project structure */
+@config "../../tailwind.config.js";
 /* 仅为仪表盘统计卡片定义字体变量 */
 :root {
   --font-inter: 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -12,7 +10,9 @@
 /* 仪表盘专用字体类 */
 .font-inter {
   font-family: var(--font-inter);
-}/* 自定义滚动条样式 */
+}
+
+/* 自定义滚动条样式 */
 .scrollbar-thin {
   scrollbar-width: thin;
 }

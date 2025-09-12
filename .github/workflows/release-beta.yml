@@ -120,6 +120,7 @@ jobs:
           args: release --clean --skip=validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ steps.get_version.outputs.tag_name }}
           
       - name: 🏗️ 运行 GoReleaser (Beta开发构建)
         if: steps.get_version.outputs.is_tag_trigger == 'false'
@@ -130,6 +131,7 @@ jobs:
           args: release --clean --skip=validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ steps.get_version.outputs.tag_name }}
           
       - name: 📢 输出构建信息
         run: |

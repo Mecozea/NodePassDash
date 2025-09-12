@@ -18,7 +18,7 @@ builds:
     ldflags:
       - -s
       - -w
-      - -X main.Version={{ .Tag }}
+      - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
       
@@ -38,7 +38,7 @@ builds:
     ldflags:
       - -s
       - -w
-      - -X main.Version={{ .Tag }}
+      - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
       
@@ -60,7 +60,7 @@ builds:
     ldflags:
       - -s
       - -w
-      - -X main.Version={{ .Tag }}
+      - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
       
@@ -82,7 +82,7 @@ builds:
     ldflags:
       - -s
       - -w
-      - -X main.Version={{ .Tag }}
+      - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
 
@@ -104,7 +104,7 @@ builds:
     ldflags:
       - -s
       - -w
-      - -X main.Version={{ .Tag }}
+      - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
       
@@ -124,7 +124,7 @@ builds:
     ldflags:
       - -s
       - -w
-      - -X main.Version={{ .Tag }}
+      - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
 
@@ -152,12 +152,12 @@ release:
   # 自动检测预发布版本 (包含 alpha, beta, rc 等)
   prerelease: auto
   # 发布名称模板
-  name_template: "NodePassDash {{ .Tag }}"
+  name_template: "NodePassDash {{ .Version }}"
   # 允许替换已存在的发布
   replace_existing_draft: true
   # 发布说明
   header: |
-    ## NodePassDash {{ .Tag }}
+    ## NodePassDash {{ .Version }}
     
     ### Feature
     
@@ -175,7 +175,7 @@ release:
     
     ### 🐳 Docker 镜像
     ```bash
-    docker pull ghcr.io/nodepassproject/nodepassdash:{{ .Tag }}
+    docker pull ghcr.io/nodepassproject/nodepassdash:{{ .Version }}
     ```
     
     ### 🔧 使用说明
