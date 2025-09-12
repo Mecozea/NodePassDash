@@ -1718,6 +1718,7 @@ func (h *TunnelHandler) HandleTemplateCreate(c *gin.Context) {
 		var serverEndpoint, clientEndpoint struct {
 			ID      int64
 			URL     string
+			IP      string
 			APIPath string
 			APIKey  string
 			Name    string
@@ -1726,9 +1727,9 @@ func (h *TunnelHandler) HandleTemplateCreate(c *gin.Context) {
 		db := h.tunnelService.DB()
 		// 获取server endpoint信息
 		err := db.QueryRow(
-			"SELECT id, url, api_path, api_key, name FROM endpoints WHERE id = ?",
+			"SELECT id, url, ip, api_path, api_key, name FROM endpoints WHERE id = ?",
 			serverConfig.MasterID,
-		).Scan(&serverEndpoint.ID, &serverEndpoint.URL, &serverEndpoint.APIPath, &serverEndpoint.APIKey, &serverEndpoint.Name)
+		).Scan(&serverEndpoint.ID, &serverEndpoint.URL, &serverEndpoint.IP, &serverEndpoint.APIPath, &serverEndpoint.APIKey, &serverEndpoint.Name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				c.JSON(http.StatusBadRequest, tunnel.TunnelResponse{
@@ -1746,9 +1747,9 @@ func (h *TunnelHandler) HandleTemplateCreate(c *gin.Context) {
 
 		// 获取client endpoint信息
 		err = db.QueryRow(
-			"SELECT id, url, apiPath, apiKey, name FROM \"Endpoint\" WHERE id = ?",
+			"SELECT id, url, ip, api_path, api_key, name FROM endpoints WHERE id = ?",
 			clientConfig.MasterID,
-		).Scan(&clientEndpoint.ID, &clientEndpoint.URL, &clientEndpoint.APIPath, &clientEndpoint.APIKey, &clientEndpoint.Name)
+		).Scan(&clientEndpoint.ID, &clientEndpoint.URL, &clientEndpoint.IP, &clientEndpoint.APIPath, &clientEndpoint.APIKey, &clientEndpoint.Name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				c.JSON(http.StatusBadRequest, tunnel.TunnelResponse{
@@ -1764,14 +1765,18 @@ func (h *TunnelHandler) HandleTemplateCreate(c *gin.Context) {
 			return
 		}
 
-		// 从server端URL中提取IP
-		serverIP := strings.TrimPrefix(serverEndpoint.URL, "http://")
-		serverIP = strings.TrimPrefix(serverIP, "https://")
-		if idx := strings.Index(serverIP, ":"); idx != -1 {
-			serverIP = serverIP[:idx]
-		}
-		if idx := strings.Index(serverIP, "/"); idx != -1 {
-			serverIP = serverIP[:idx]
+		// 使用数据库中存储的server端IP
+		serverIP := serverEndpoint.IP
+		if serverIP == "" {
+			// 如果数据库中没有IP，降级到从URL提取
+			serverIP = strings.TrimPrefix(serverEndpoint.URL, "http://")
+			serverIP = strings.TrimPrefix(serverIP, "https://")
+			if idx := strings.Index(serverIP, ":"); idx != -1 {
+				serverIP = serverIP[:idx]
+			}
+			if idx := strings.Index(serverIP, "/"); idx != -1 {
+				serverIP = serverIP[:idx]
+			}
 		}
 
 		// 双端转发：server端监听listen_port，转发到outbounds的target
@@ -1883,6 +1888,7 @@ func (h *TunnelHandler) HandleTemplateCreate(c *gin.Context) {
 		var serverEndpoint, clientEndpoint struct {
 			ID      int64
 			URL     string
+			IP      string
 			APIPath string
 			APIKey  string
 			Name    string
@@ -1891,9 +1897,9 @@ func (h *TunnelHandler) HandleTemplateCreate(c *gin.Context) {
 		db := h.tunnelService.DB()
 		// 获取server endpoint信息
 		err := db.QueryRow(
-			"SELECT id, url, api_path, api_key, name FROM endpoints WHERE id = ?",
+			"SELECT id, url, ip, api_path, api_key, name FROM endpoints WHERE id = ?",
 			serverConfig.MasterID,
-		).Scan(&serverEndpoint.ID, &serverEndpoint.URL, &serverEndpoint.APIPath, &serverEndpoint.APIKey, &serverEndpoint.Name)
+		).Scan(&serverEndpoint.ID, &serverEndpoint.URL, &serverEndpoint.IP, &serverEndpoint.APIPath, &serverEndpoint.APIKey, &serverEndpoint.Name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				c.JSON(http.StatusBadRequest, tunnel.TunnelResponse{
@@ -1911,9 +1917,9 @@ func (h *TunnelHandler) HandleTemplateCreate(c *gin.Context) {
 
 		// 获取client endpoint信息
 		err = db.QueryRow(
-			"SELECT id, url, apiPath, apiKey, name FROM \"Endpoint\" WHERE id = ?",
+			"SELECT id, url, ip, api_path, api_key, name FROM endpoints WHERE id = ?",
 			clientConfig.MasterID,
-		).Scan(&clientEndpoint.ID, &clientEndpoint.URL, &clientEndpoint.APIPath, &clientEndpoint.APIKey, &clientEndpoint.Name)
+		).Scan(&clientEndpoint.ID, &clientEndpoint.URL, &clientEndpoint.IP, &clientEndpoint.APIPath, &clientEndpoint.APIKey, &clientEndpoint.Name)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				c.JSON(http.StatusBadRequest, tunnel.TunnelResponse{
@@ -1929,14 +1935,18 @@ func (h *TunnelHandler) HandleTemplateCreate(c *gin.Context) {
 			return
 		}
 
-		// 从server端URL中提取IP
-		serverIP := strings.TrimPrefix(serverEndpoint.URL, "http://")
-		serverIP = strings.TrimPrefix(serverIP, "https://")
-		if idx := strings.Index(serverIP, ":"); idx != -1 {
-			serverIP = serverIP[:idx]
-		}
-		if idx := strings.Index(serverIP, "/"); idx != -1 {
-			serverIP = serverIP[:idx]
+		// 使用数据库中存储的server端IP
+		serverIP := serverEndpoint.IP
+		if serverIP == "" {
+			// 如果数据库中没有IP，降级到从URL提取
+			serverIP = strings.TrimPrefix(serverEndpoint.URL, "http://")
+			serverIP = strings.TrimPrefix(serverIP, "https://")
+			if idx := strings.Index(serverIP, ":"); idx != -1 {
+				serverIP = serverIP[:idx]
+			}
+			if idx := strings.Index(serverIP, "/"); idx != -1 {
+				serverIP = serverIP[:idx]
+			}
 		}
 
 		// 内网穿透：server端监听listen_port，目标是用户要访问的地址
