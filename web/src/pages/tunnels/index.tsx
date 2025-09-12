@@ -1103,7 +1103,7 @@ export default function TunnelsPage() {
   );
 
   // 更新实例状态的函数
-  const handleStatusChange = (tunnelId: string, isRunning: boolean) => {
+  const handleStatusChange = (tunnelId: number, isRunning: boolean) => {
     setTunnels((prev) =>
       prev.map((tunnel) =>
         tunnel.id === tunnelId
@@ -1158,7 +1158,7 @@ export default function TunnelsPage() {
     });
   };
 
-  const handleDeleteClick = (tunnel: any) => {
+  const handleDeleteClick = (tunnel: Tunnel) => {
     setDeleteModalTunnel(tunnel);
     onOpen();
   };

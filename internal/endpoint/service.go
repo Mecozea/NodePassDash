@@ -344,12 +344,20 @@ func (s *Service) DeleteEndpoint(id int64) error {
 			}
 		}
 
-		// 2) 删除关联隧道
+		// 2) 删除隧道操作日志，避免外键约束错误
+		if err := tx.Exec("DELETE FROM tunnel_operation_logs WHERE tunnel_id IN (SELECT id FROM tunnels WHERE endpoint_id = ?)", id).Error; err != nil {
+			// 忽略记录不存在的错误
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("删除隧道操作日志失败: %v", err)
+			}
+		}
+
+		// 3) 删除关联隧道
 		if err := tx.Where("endpoint_id = ?", id).Delete(&models.Tunnel{}).Error; err != nil {
 			return err
 		}
 
-		// 3) 删除SSE日志
+		// 4) 删除SSE日志
 		if err := tx.Where("endpoint_id = ?", id).Delete(&models.EndpointSSE{}).Error; err != nil {
 			// 忽略记录不存在的错误
 			if !errors.Is(err, gorm.ErrRecordNotFound) {

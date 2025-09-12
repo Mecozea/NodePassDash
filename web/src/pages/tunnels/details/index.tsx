@@ -75,7 +75,7 @@ import TunnelStatsCharts from "@/components/ui/tunnel-stats-charts";
 import { useSettings } from "@/components/providers/settings-provider";
 
 interface TunnelInfo {
-  id: string;
+  id: number;
   instanceId: string;
   name: string;
   type: "server" | "client"; // 统一使用英文类型
@@ -2640,7 +2640,7 @@ export default function TunnelDetailPage() {
       <RenameTunnelModal
         isOpen={isRenameModalOpen}
         onOpenChange={setIsRenameModalOpen}
-        tunnelId={tunnelInfo?.id || ""}
+        tunnelId={tunnelInfo?.id || 0}
         currentName={tunnelInfo?.name || ""}
         onRenamed={handleRenameSuccess}
       />

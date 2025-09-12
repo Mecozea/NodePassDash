@@ -40,7 +40,7 @@ interface SimpleCreateTunnelModalProps {
   onOpenChange: (open: boolean) => void;
   onSaved?: () => void;
   mode?: "create" | "edit";
-  editData?: Partial<Record<string, any>> & { id?: string };
+  editData?: Partial<Record<string, any>> & { id?: number };
 }
 
 // 版本比较函数

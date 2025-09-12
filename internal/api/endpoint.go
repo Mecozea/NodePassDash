@@ -1154,6 +1154,11 @@ func (h *EndpointHandler) refreshTunnels(endpointID int64) error {
 		for _, tunnel := range existingTunnels {
 			if tunnel.InstanceID != nil {
 				if _, exists := instanceIDSet[*tunnel.InstanceID]; !exists {
+					// 先删除相关的操作日志记录，避免外键约束错误
+					if err = tx.Where("tunnel_id = ?", tunnel.ID).Delete(&models.TunnelOperationLog{}).Error; err != nil {
+						log.Warnf("[API] 删除隧道 %d 操作日志失败: %v", tunnel.ID, err)
+					}
+					
 					if err = tx.Delete(&models.Tunnel{}, tunnel.ID).Error; err != nil {
 						return fmt.Errorf("删除隧道失败: %v", err)
 					}

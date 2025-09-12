@@ -410,14 +410,6 @@ func (h *TunnelHandler) HandleDeleteTunnel(c *gin.Context) {
 	}
 	_ = c.ShouldBindJSON(&req) // 即使失败也无妨，后续再判断
 
-	// 兼容前端使用 query 参数 recycle=1
-	if !req.Recycle {
-		q := c.Request.URL.Query().Get("recycle")
-		if q == "1" || strings.ToLower(q) == "true" {
-			req.Recycle = true
-		}
-	}
-
 	// 如果未提供 instanceId ，则尝试从路径参数中解析数据库 id
 	if req.InstanceID == "" {
 		idStr := c.Param("id")
@@ -447,25 +439,13 @@ func (h *TunnelHandler) HandleDeleteTunnel(c *gin.Context) {
 	// 在删除前先获取隧道数据库ID，用于清理分组关系和文件日志
 	var tunnelID int64
 	var endpointID int64
-	var shouldClearLogs = !req.Recycle
 	if err := h.tunnelService.DB().QueryRow(`SELECT id, endpoint_id FROM tunnels WHERE instance_id = ?`, req.InstanceID).Scan(&tunnelID, &endpointID); err != nil {
-		// 如果从Tunnel表获取失败，尝试从EndpointSSE表获取端点ID
-		if shouldClearLogs {
-			if err := h.tunnelService.DB().QueryRow(`SELECT DISTINCT endpoint_id FROM endpoint_sse WHERE instance_id = ? LIMIT 1`, req.InstanceID).Scan(&endpointID); err != nil {
-				log.Warnf("[API] 无法获取端点ID用于清理文件日志: instanceID=%s, err=%v", req.InstanceID, err)
-				shouldClearLogs = false
-			}
-		}
 	} else {
-		// 如果不是移入回收站，清理标签关联
-		if !req.Recycle {
-
-			// 清理隧道标签关联
-			if _, err := h.tunnelService.DB().Exec("DELETE FROM tunnel_tags WHERE tunnel_id = ?", tunnelID); err != nil {
-				log.Warnf("[API] 删除隧道标签关联失败: tunnelID=%d, err=%v", tunnelID, err)
-			} else {
-				log.Infof("[API] 已删除隧道标签关联: tunnelID=%d", tunnelID)
-			}
+		// 清理隧道标签关联
+		if _, err := h.tunnelService.DB().Exec("DELETE FROM tunnel_tags WHERE tunnel_id = ?", tunnelID); err != nil {
+			log.Warnf("[API] 删除隧道标签关联失败: tunnelID=%d, err=%v", tunnelID, err)
+		} else {
+			log.Infof("[API] 已删除隧道标签关联: tunnelID=%d", tunnelID)
 		}
 	}
 
@@ -478,7 +458,7 @@ func (h *TunnelHandler) HandleDeleteTunnel(c *gin.Context) {
 	}
 
 	// 如果不是移入回收站，则清理文件日志
-	if shouldClearLogs && h.sseManager != nil && h.sseManager.GetFileLogger() != nil {
+	if h.sseManager != nil && h.sseManager.GetFileLogger() != nil {
 		if err := h.sseManager.GetFileLogger().ClearLogs(endpointID, req.InstanceID); err != nil {
 			log.Warnf("[API] 清理隧道文件日志失败: endpointID=%d, instanceID=%s, err=%v", endpointID, req.InstanceID, err)
 		} else {
