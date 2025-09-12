@@ -88,10 +88,6 @@ func (s *Service) Close() {
 		s.historyWorker.Close()
 	}
 
-	if s.historyWorker != nil {
-		s.historyWorker.Close()
-	}
-
 	// 关闭所有客户端
 	s.mu.Lock()
 	for clientID, client := range s.clients {
@@ -284,6 +280,11 @@ func buildTunnel(payload SSEResp) *models.Tunnel {
 	tunnel.Restart = payload.Instance.Restart
 	tunnel.Name = *payload.Instance.Alias
 	tunnel.Status = models.TunnelStatus(payload.Instance.Status)
+
+	if tunnel.Mode == nil {
+		tunnel.Mode = (*models.TunnelMode)(payload.Instance.Mode)
+	}
+
 	return tunnel
 }
 

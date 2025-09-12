@@ -179,7 +179,7 @@ func (h *TunnelHandler) HandleCreateTunnel(c *gin.Context) {
 		Min            json.RawMessage `json:"min"`
 		Max            json.RawMessage `json:"max"`
 		Slot           json.RawMessage `json:"slot"`                       // 新增：最大连接数限制
-		Mode           *string         `json:"mode,omitempty"`             // 新增：运行模式 (0, 1, 2)
+		Mode           *int            `json:"mode,omitempty"`             // 新增：运行模式 (0, 1, 2)
 		Read           *string         `json:"read,omitempty"`             // 新增：数据读取超时时间
 		Rate           *string         `json:"rate,omitempty"`             // 新增：带宽速率限制
 		EnableSSEStore *bool           `json:"enable_sse_store,omitempty"` // 新增：是否启用SSE存储
@@ -266,8 +266,7 @@ func (h *TunnelHandler) HandleCreateTunnel(c *gin.Context) {
 	// 处理Mode字段的类型转换
 	var modePtr *tunnel.TunnelMode
 	if raw.Mode != nil {
-		mode := tunnel.TunnelMode(*raw.Mode)
-		modePtr = &mode
+		modePtr = (*tunnel.TunnelMode)(raw.Mode)
 	}
 
 	req := tunnel.CreateTunnelRequest{
@@ -662,8 +661,10 @@ func (h *TunnelHandler) HandleUpdateTunnel(c *gin.Context) {
 		// 处理Mode字段的类型转换
 		var modePtr *tunnel.TunnelMode
 		if rawCreate.Mode != nil {
-			mode := tunnel.TunnelMode(*rawCreate.Mode)
-			modePtr = &mode
+			if modeInt, err := strconv.Atoi(*rawCreate.Mode); err == nil {
+				mode := tunnel.TunnelMode(modeInt)
+				modePtr = &mode
+			}
 		}
 
 		createReq := tunnel.CreateTunnelRequest{
@@ -3155,8 +3156,10 @@ func (h *TunnelHandler) HandleUpdateTunnelV2(c *gin.Context) {
 			// 处理Mode字段的类型转换
 			var modePtr *tunnel.TunnelMode
 			if raw.Mode != nil {
-				mode := tunnel.TunnelMode(*raw.Mode)
-				modePtr = &mode
+				if modeInt, err := strconv.Atoi(*raw.Mode); err == nil {
+					mode := tunnel.TunnelMode(modeInt)
+					modePtr = &mode
+				}
 			}
 
 			createReq := tunnel.CreateTunnelRequest{
