@@ -57,10 +57,10 @@ export function QuickEntryCard() {
       id: "docs",
       icon: "solar:document-text-bold",
       label: "文档",
-      route: "https://github.com/yosebyte/nodepass/blob/main/docs/zh/examples.md",
+      route: "/docs",
       color: "bg-indigo-500 hover:bg-indigo-600",
       iconType: "iconify",
-      external: true
+      external: false
     },
     {
       id: "debug-tools",

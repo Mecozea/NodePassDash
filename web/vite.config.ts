@@ -25,6 +25,12 @@ export default defineConfig(({ mode }) => ({
         secure: false,
         ws: true, // 启用 WebSocket 代理
       },
+      '/docs-proxy': {
+        target: 'https://raw.githubusercontent.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/docs-proxy/, ''),
+      },
     },
   },
 }));
