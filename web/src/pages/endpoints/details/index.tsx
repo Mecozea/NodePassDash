@@ -725,7 +725,7 @@ export default function EndpointDetailPage() {
           </Button>
           {endpointDetail ? (
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-lg md:text-2xl font-bold truncate">{endpointDetail.name}</h1>
+              <h1 className="text-lg md:text-2xl font-bold truncate max-w-[200px] md:max-w-none">{endpointDetail.name}</h1>
               {endpointDetail.ver && (
                 <Chip variant="flat" color="secondary">
                   {endpointDetail.ver}
@@ -1326,6 +1326,8 @@ export default function EndpointDetailPage() {
                     value={configForm.name}
                     onValueChange={(value) => setConfigForm(prev => ({...prev, name: value}))}
                     isRequired
+                    maxLength={25}
+                    endContent={<span className="text-xs text-default-500">{configForm.name.length}/25</span>}
                   />
                   
                   <Input

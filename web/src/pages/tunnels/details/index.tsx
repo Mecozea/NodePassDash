@@ -32,6 +32,7 @@ import { Snippet } from "@/components/ui/snippet";
 import React, { useEffect } from "react";
 // 引入 SimpleCreateTunnelModal 组件
 import SimpleCreateTunnelModal from "@/components/tunnels/simple-create-tunnel-modal";
+import RenameTunnelModal from "@/components/tunnels/rename-tunnel-modal";
 import { FullscreenChartModal } from "./fullscreen-chart-modal";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -342,8 +343,6 @@ export default function TunnelDetailPage() {
 
   // 重命名模态控制
   const [isRenameModalOpen, setIsRenameModalOpen] = React.useState(false);
-  const [newTunnelName, setNewTunnelName] = React.useState("");
-  const [isRenameLoading, setIsRenameLoading] = React.useState(false);
 
   // 是否移入回收站
   const [moveToRecycle, setMoveToRecycle] = React.useState(false);
@@ -1182,48 +1181,15 @@ export default function TunnelDetailPage() {
 
   // 重命名处理函数
   const handleRenameClick = () => {
-    setNewTunnelName(tunnelInfo?.name || "");
     setIsRenameModalOpen(true);
   };
 
-  const handleRenameSubmit = async () => {
-    if (!tunnelInfo || !newTunnelName.trim()) return;
-
-    try {
-      setIsRenameLoading(true);
-      const response = await fetch(`/api/tunnels/${tunnelInfo.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "rename",
-          name: newTunnelName.trim(),
-        }),
-      });
-
-      if (!response.ok) throw new Error("修改名称失败");
-
-      // 更新本地状态
-      setTunnelInfo((prev) =>
-        prev ? { ...prev, name: newTunnelName.trim() } : null
-      );
-
-      addToast({
-        title: "修改成功",
-        description: "实例名称已更新",
-        color: "success",
-      });
-
-      setIsRenameModalOpen(false);
-    } catch (error) {
-      console.error("修改名称失败:", error);
-      addToast({
-        title: "修改失败",
-        description: error instanceof Error ? error.message : "未知错误",
-        color: "danger",
-      });
-    } finally {
-      setIsRenameLoading(false);
-    }
+  // 重命名成功回调
+  const handleRenameSuccess = (newName: string) => {
+    // 更新本地状态
+    setTunnelInfo((prev) =>
+      prev ? { ...prev, name: newName } : null
+    );
   };
 
   // 如果正在加载或没有数据，显示加载状态
@@ -2671,51 +2637,13 @@ export default function TunnelDetailPage() {
       )}
 
       {/* 重命名模态框 */}
-      <Modal
+      <RenameTunnelModal
         isOpen={isRenameModalOpen}
         onOpenChange={setIsRenameModalOpen}
-        placement="center"
-      >
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faPen} className="text-primary" />
-                  修改实例名称
-                </div>
-              </ModalHeader>
-              <ModalBody>
-                <Input
-                  label="实例名称"
-                  placeholder="请输入新的实例名称"
-                  value={newTunnelName}
-                  onValueChange={setNewTunnelName}
-                  variant="bordered"
-                  isDisabled={isRenameLoading}
-                />
-              </ModalBody>
-              <ModalFooter>
-                <Button
-                  color="default"
-                  variant="light"
-                  onPress={onClose}
-                  isDisabled={isRenameLoading}
-                >
-                  取消
-                </Button>
-                <Button
-                  color="primary"
-                  onPress={handleRenameSubmit}
-                  isLoading={isRenameLoading}
-                >
-                  确认修改
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+        tunnelId={tunnelInfo?.id || ""}
+        currentName={tunnelInfo?.name || ""}
+        onRenamed={handleRenameSuccess}
+      />
 
       {/* 全屏图表模态 */}
       <FullscreenChartModal
