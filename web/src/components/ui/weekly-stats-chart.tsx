@@ -95,7 +95,7 @@ export function WeeklyStatsChart() {
   const { title, categories, color, chartData } = weeklyStatsData;
 
   return (
-    <Card className="h-full min-h-[300px] dark:border-default-100 border border-transparent">
+    <Card className="h-full dark:border-default-100 border border-transparent">
       <div className="flex flex-col gap-y-4 p-5 pb-0">
         <div className="flex flex-col gap-y-0">
           <span className="text-base font-semibold text-foreground">{title}</span>
@@ -116,7 +116,7 @@ export function WeeklyStatsChart() {
       </div>
       <ResponsiveContainer
         className="[&_.recharts-surface]:outline-hidden flex-1"
-        height="100%"
+        height={150}
         width="100%"
       >
         <BarChart

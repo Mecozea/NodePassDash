@@ -46,6 +46,7 @@ import { ServerIconRed } from "@/components/ui/server-red-icon";
 import { useSettings } from '@/components/providers/settings-provider';
 import { WeeklyStatsChart } from "@/components/ui/weekly-stats-chart";
 import { DailyStatsChart } from "@/components/ui/daily-stats-chart";
+import Component  from "./bar1"
 
 // 统计数据类型
 interface TunnelStats {
@@ -486,7 +487,7 @@ export default function DemoPage() {
       </div>
 
       {/* 流量概览和主控列表 - 响应式布局 */}
-      <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 md:gap-6" style={{ minHeight: '400px' }}>
+      <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 md:gap-6" >
         {/* 流量概览 - 在移动端占满宽度，桌面端占2列 */}
         <div className="lg:col-span-2 lg:h-full">
           <TrafficOverviewChart
@@ -597,11 +598,6 @@ export default function DemoPage() {
 
       {/* 快捷操作和其他卡片 - 三列布局 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        {/* 快捷操作按钮 - 左侧占三分之一 */}
-        <div className="w-full">
-          <DemoQuickEntryCard />
-        </div>
-
         {/* 本周统计 - 中间占三分之一 */}
         <div className="w-full">
           <WeeklyStatsChart />
@@ -610,6 +606,11 @@ export default function DemoPage() {
         {/* 今日统计 - 右侧占三分之一 */}
         <div className="w-full">
           <DailyStatsChart />
+        </div>
+
+         {/* 快捷操作按钮 - 左侧占三分之一 */}
+        <div className="w-full">
+          <DemoQuickEntryCard />
         </div>
       </div>
 

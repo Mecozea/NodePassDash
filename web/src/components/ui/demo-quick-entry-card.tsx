@@ -45,24 +45,6 @@ export function DemoQuickEntryCard() {
       external: false
     },
     {
-      id: "settings",
-      icon: "solar:settings-bold",
-      label: "设置",
-      route: "/settings",
-      color: "bg-gray-500 hover:bg-gray-600",
-      iconType: "iconify",
-      external: false
-    },
-    {
-      id: "docs",
-      icon: "solar:document-text-bold",
-      label: "文档",
-      route: "/docs",
-      color: "bg-indigo-500 hover:bg-indigo-600",
-      iconType: "iconify",
-      external: false
-    },
-    {
       id: "debug-tools",
       icon: faBug,
       label: "调试工具",
@@ -70,11 +52,29 @@ export function DemoQuickEntryCard() {
       color: "bg-teal-500 hover:bg-teal-600",
       iconType: "fontawesome",
       external: false
+    },
+    {
+      id: "docs",
+      icon: "solar:document-text-bold",
+      label: "说明文档",
+      route: "/docs",
+      color: "bg-indigo-500 hover:bg-indigo-600",
+      iconType: "iconify",
+      external: false
+    },
+    {
+      id: "settings",
+      icon: "solar:settings-bold",
+      label: "系统设置",
+      route: "/settings",
+      color: "bg-gray-500 hover:bg-gray-600",
+      iconType: "iconify",
+      external: false
     }
   ];
 
   return (
-    <Card className="h-full min-h-[300px] dark:border-default-100 border border-transparent">
+    <Card className="h-full   dark:border-default-100 border border-transparent">
       <CardBody className="p-5 h-full flex flex-col">
         {/* 标题 */}
         <span className="text-base font-semibold text-foreground mb-4">快捷操作</span>
@@ -84,7 +84,7 @@ export function DemoQuickEntryCard() {
           {quickActions.map((action) => (
             <div
               key={action.id}
-              className="flex items-center gap-3 p-3 cursor-pointer group transition-all hover:scale-[1.02] rounded-lg hover:bg-default-50 dark:hover:bg-default-100"
+              className="flex items-center gap-3 cursor-pointer group transition-all hover:scale-[1.02] rounded-lg hover:bg-default-50 dark:hover:bg-default-100"
               onClick={() => {
                 if (action.external) {
                   window.open(action.route, '_blank');

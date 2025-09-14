@@ -36,84 +36,25 @@ type CircleChartProps = {
 
 const data: CircleChartProps[] = [
   {
-    title: "Energy Activity",
-    categories: ["Calories", "Steps", "Exercise"],
-    color: "default",
-    unit: "kcal",
-    unitTitle: "Calories",
-    total: 700,
-    chartData: [
-      {name: "Calories", value: 200, valueText: "1,623/2,000 kcal"},
-      {name: "Steps", value: 350, valueText: "8,328/10,000 steps"},
-      {name: "Exercise", value: 250, valueText: "25/120 min"},
-    ],
-  },
-  {
-    title: "Energy Activity",
-    categories: ["Calories", "Steps", "Exercise"],
-    color: "primary",
-    unit: "kcal",
-    unitTitle: "Calories",
-    total: 700,
-    chartData: [
-      {name: "Calories", value: 200, valueText: "1,623/2,000 kcal"},
-      {name: "Steps", value: 350, valueText: "8,328/10,000 steps"},
-      {name: "Exercise", value: 250, valueText: "25/120 min"},
-    ],
-  },
-  {
-    title: "Energy Activity",
-    categories: ["Calories", "Steps", "Exercise"],
-    color: "secondary",
-    unit: "kcal",
-    unitTitle: "Calories",
-    total: 700,
-    chartData: [
-      {name: "Calories", value: 200, valueText: "1,623/2,000 kcal"},
-      {name: "Steps", value: 350, valueText: "8,328/10,000 steps"},
-      {name: "Exercise", value: 250, valueText: "25/120 min"},
-    ],
-  },
-  {
-    title: "Energy Activity",
-    categories: ["Calories", "Steps", "Exercise"],
+    title: "今日流量",
+    categories: ["TCP In", "TCP Out", "UDP In","UDP Out"],
     color: "success",
-    unit: "kcal",
-    unitTitle: "Calories",
+    unit: "GB",
+    unitTitle: "Total",
     total: 700,
     chartData: [
-      {name: "Calories", value: 200, valueText: "1,623/2,000 kcal"},
-      {name: "Steps", value: 350, valueText: "8,328/10,000 steps"},
-      {name: "Exercise", value: 250, valueText: "25/120 min"},
-    ],
-  },
-  {
-    title: "Energy Activity",
-    categories: ["Calories", "Steps", "Exercise"],
-    color: "warning",
-    unit: "kcal",
-    unitTitle: "Calories",
-    total: 700,
-    chartData: [
-      {name: "Calories", value: 200, valueText: "1,623/2,000 kcal"},
-      {name: "Steps", value: 350, valueText: "8,328/10,000 steps"},
-      {name: "Exercise", value: 250, valueText: "25/120 min"},
-    ],
-  },
-  {
-    title: "Energy Activity",
-    categories: ["Calories", "Steps", "Exercise"],
-    color: "danger",
-    unit: "kcal",
-    unitTitle: "Calories",
-    total: 700,
-    chartData: [
-      {name: "Calories", value: 200, valueText: "1,623/2,000 kcal"},
-      {name: "Steps", value: 350, valueText: "8,328/10,000 steps"},
-      {name: "Exercise", value: 250, valueText: "25/120 min"},
+      {name: "TCP In", value: 623, valueText: "623GB"},
+      {name: "TCP Out", value: 328, valueText: "328GB"},
+      {name: "UDP In", value: 25, valueText: "25GB"},
+      {name: "UDP Out", value: 25, valueText: "25GB"},
     ],
   },
 ];
+
+
+export function AutoPreview_Btn() {
+  return Component();
+}
 
 export default function Component() {
   return (
@@ -153,57 +94,14 @@ const CircleChartCard = React.forwardRef<
       <div className="flex flex-col gap-y-2 p-4 pb-0">
         <div className="flex items-center justify-between gap-x-2">
           <dt>
-            <h3 className="text-small text-default-500 font-medium">{title}</h3>
+            <h3 className="text-base text-foreground font-semibold mb-4">{title}</h3>
           </dt>
           <div className="flex items-center justify-end gap-x-2">
-            <Select
-              aria-label="Time Range"
-              classNames={{
-                trigger: "min-w-[100px] min-h-7 h-7",
-                value: "text-tiny text-default-500!",
-                selectorIcon: "text-default-500",
-                popoverContent: "min-w-[120px]",
-              }}
-              defaultSelectedKeys={["per-day"]}
-              listboxProps={{
-                itemClasses: {
-                  title: "text-tiny",
-                },
-              }}
-              placeholder="Per Day"
-              size="sm"
-            >
-              <SelectItem key="per-day">Per Day</SelectItem>
-              <SelectItem key="per-week">Per Week</SelectItem>
-              <SelectItem key="per-month">Per Month</SelectItem>
-            </Select>
-            <Dropdown
-              classNames={{
-                content: "min-w-[120px]",
-              }}
-              placement="bottom-end"
-            >
-              <DropdownTrigger>
-                <Button isIconOnly radius="full" size="sm" variant="light">
-                  <Icon height={16} icon="solar:menu-dots-bold" width={16} />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                itemClasses={{
-                  title: "text-tiny",
-                }}
-                variant="flat"
-              >
-                <DropdownItem key="view-details">View Details</DropdownItem>
-                <DropdownItem key="export-data">Export Data</DropdownItem>
-                <DropdownItem key="set-alert">Set Alert</DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
           </div>
         </div>
       </div>
       <div className="flex h-full flex-col flex-col-reverse flex-wrap gap-3 sm:flex-row sm:flex-nowrap">
-        <div className="text-tiny text-default-500 flex flex-col justify-center gap-y-2 pb-4 pl-5 lg:pb-0">
+        <div className="text-tiny text-default-500 flex flex-col justify-center gap-y-2 pb-4 pl-5 lg:pb-0 sm:flex-[2]">
           {categories.map((category, index) => {
             const title = category;
             const valueText = chartData.find((c) => c.name === title)?.valueText;
@@ -218,11 +116,12 @@ const CircleChartCard = React.forwardRef<
             );
           })}
         </div>
-        <ResponsiveContainer
-          className="[&_.recharts-surface]:outline-hidden"
-          height={200}
-          width="100%"
-        >
+        <div className="sm:flex-[3]">
+          <ResponsiveContainer
+            className="[&_.recharts-surface]:outline-hidden pr-5"
+            height={200}
+            width="100%"
+          >
           <RadialBarChart
             barSize={10}
             cx="50%"
@@ -288,7 +187,8 @@ const CircleChartCard = React.forwardRef<
               </text>
             </g>
           </RadialBarChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        </div>
       </div>
     </Card>
   );

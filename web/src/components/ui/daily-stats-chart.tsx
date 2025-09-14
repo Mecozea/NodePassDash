@@ -6,8 +6,16 @@ import React from "react";
 import { ResponsiveContainer, RadialBarChart, RadialBar, Cell, Tooltip } from "recharts";
 import {
   Card,
+  Button,
+  Select,
+  SelectItem,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+  cn,
 } from "@heroui/react";
-
+import { Icon } from "@iconify/react";
 type ChartData = {
   name: string;
   value: number;
@@ -27,17 +35,17 @@ type DailyStatsChartProps = {
 
 // 模拟今日统计数据
 const dailyStatsData: DailyStatsChartProps = {
-  title: "今日统计",
+  title: "今日流量",
   categories: ["TCP In", "TCP Out", "UDP In", "UDP Out"],
   color: "success",
   unit: "GB",
-  unitTitle: "总流量",
-  total: 245,
+  unitTitle: "Total",
+  total: 700,
   chartData: [
-    { name: "TCP In", value: 85, valueText: "85 GB" },
-    { name: "TCP Out", value: 68, valueText: "68 GB" },
-    { name: "UDP In", value: 52, valueText: "52 GB" },
-    { name: "UDP Out", value: 40, valueText: "40 GB" },
+    { name: "TCP In", value: 623, valueText: "623GB" },
+    { name: "TCP Out", value: 328, valueText: "328GB" },
+    { name: "UDP In", value: 25, valueText: "25GB" },
+    { name: "UDP Out", value: 25, valueText: "25GB" },
   ],
 };
 
@@ -60,33 +68,34 @@ export function DailyStatsChart() {
   const { title, categories, color, chartData, unit, total, unitTitle } = dailyStatsData;
 
   return (
-    <Card className="h-full min-h-[300px] dark:border-default-100 border border-transparent">
-      <div className="flex flex-col gap-y-2 p-5 pb-0">
+    <Card className="dark:border-default-100 min-h-[300] border border-transparent">
+      <div className="flex flex-col gap-y-4 p-5 pb-0">
         <div className="flex flex-col gap-y-0">
-          <span className="text-base font-semibold text-foreground">{title}</span>
+          <span className="text-base font-semibold text-foreground">今日流量</span>
         </div>
       </div>
       <div className="flex h-full flex-col flex-col-reverse flex-wrap gap-3 sm:flex-row sm:flex-nowrap">
-        <div className="text-tiny text-default-500 flex flex-col justify-center gap-y-2 pb-4 pl-5 lg:pb-0">
+        <div className="text-tiny text-default-500 flex flex-col justify-center gap-y-4 pb-4 pl-5 lg:pb-0 sm:flex-[2]">
           {categories.map((category, index) => {
             const title = category;
             const valueText = chartData.find((c) => c.name === title)?.valueText;
 
             return (
-              <div key={index} className="flex flex-col items-start gap-y-0">
-                <span className="text-small text-default-500 font-medium capitalize">
-                  {category}
+              <div key={index} className="flex justify-between gap-y-0 pr-2">
+                <span className="text-small text-default-500 font-medium capitalize ">
+                  {category}               
                 </span>
-                <span className="text-small text-foreground font-semibold">{valueText}</span>
+                  <span className="text-small text-foreground font-semibold">{valueText}</span>
               </div>
             );
           })}
         </div>
-        <ResponsiveContainer
-          className="[&_.recharts-surface]:outline-hidden"
-          height={200}
-          width="100%"
-        >
+        <div className="sm:flex-[3]">
+          <ResponsiveContainer
+            className="[&_.recharts-surface]:outline-hidden pr-5"
+            height={200}
+            width="100%"
+          >
           <RadialBarChart
             barSize={10}
             cx="50%"
@@ -152,7 +161,8 @@ export function DailyStatsChart() {
               </text>
             </g>
           </RadialBarChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        </div>
       </div>
     </Card>
   );
