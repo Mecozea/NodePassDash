@@ -75,9 +75,9 @@ export function QuickEntryCard() {
 
   return (
     <Card className="h-full min-h-[120px] dark:border-default-100 border border-transparent">
-      <CardBody className="p-4 h-full flex flex-col justify-between">
+      <CardBody className="p-5 h-full flex flex-col justify-between">
         {/* 标题 */}
-        <dt className="text-small text-foreground font-medium">快捷操作</dt>        
+        <span className="text-base font-semibold text-foreground">快捷操作</span>
         {/* 按钮行 */}
         <div className="flex pt-5 justify-between">
           {quickActions.map((action) => (

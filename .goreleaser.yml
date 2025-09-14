@@ -21,6 +21,8 @@ builds:
       - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
+      - sqlite_fts
+      - sqlite_stat4
       
   # Linux ARM64 (aarch64) - 新款ARM服务器、树莓派4 64位
   - id: linux-arm64
@@ -41,6 +43,8 @@ builds:
       - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
+      - sqlite_fts
+      - sqlite_stat4
       
   # Linux ARMv7 (hard-float) - 树莓派2/3/4 32位、大多数ARM设备
   - id: linux-armv7
@@ -63,6 +67,8 @@ builds:
       - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
+      - sqlite_fts
+      - sqlite_stat4
       
   # Linux ARMv6 (soft-float) - 树莓派1、老款ARM设备
   - id: linux-armv6
@@ -85,6 +91,8 @@ builds:
       - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
+      - sqlite_fts
+      - sqlite_stat4
 
   # ==================== Windows 构建 ====================
       
@@ -107,6 +115,8 @@ builds:
       - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
+      - sqlite_fts
+      - sqlite_stat4
       
   # Windows 386 - 32位Windows系统
   - id: windows-386
@@ -127,6 +137,8 @@ builds:
       - -X main.Version={{ .Version }}
     tags:
       - sqlite_omit_load_extension
+      - sqlite_fts
+      - sqlite_stat4
 
 archives:
   - format: tar.gz

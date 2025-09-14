@@ -302,10 +302,10 @@ export function TrafficOverviewChart({
   return (
     <Card as="dl" className="h-full min-h-[400px] dark:border-default-100 border border-transparent">
       <section className="flex flex-col flex-nowrap h-full">
-        <div className="flex flex-col justify-between gap-y-2 p-6 flex-shrink-0">
+        <div className="flex flex-col justify-between gap-y-2 p-5 flex-shrink-0">
           <div className="flex flex-col gap-y-2">
             <div className="flex flex-col gap-y-0">
-              <dt className="text-medium text-foreground font-medium">流量总耗</dt>
+              <span className="text-base font-semibold text-foreground">流量总耗</span>
             </div>
             <div className="mt-2 flex w-full items-center">
               <div className="-my-3 flex w-full max-w-[800px] items-center gap-x-3 overflow-x-auto py-3">

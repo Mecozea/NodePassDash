@@ -158,11 +158,12 @@ func (h *DashboardHandler) HandleGetTunnelStats(c *gin.Context) {
 
 	// 获取隧道统计数据
 	var stats struct {
-		Total   int64 `json:"total"`
-		Running int64 `json:"running"`
-		Stopped int64 `json:"stopped"`
-		Error   int64 `json:"error"`
-		Offline int64 `json:"offline"`
+		Total          int64 `json:"total"`
+		Running        int64 `json:"running"`
+		Stopped        int64 `json:"stopped"`
+		Error          int64 `json:"error"`
+		Offline        int64 `json:"offline"`
+		TotalEndpoints int64 `json:"total_endpoints"`
 	}
 
 	// 使用原生 SQL 查询统计数据
@@ -181,6 +182,16 @@ func (h *DashboardHandler) HandleGetTunnelStats(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
+		})
+		return
+	}
+
+	// 获取主控总数
+	err = h.dashboardService.DB().Raw("SELECT COUNT(*) FROM endpoints").Scan(&stats.TotalEndpoints).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "获取主控总数失败: " + err.Error(),
 		})
 		return
 	}
