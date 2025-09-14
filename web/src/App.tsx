@@ -18,7 +18,6 @@ import EndpointDetailsPage from "./pages/endpoints/details";
 import EndpointSSEDebugPage from "./pages/endpoints/sse-debug";
 import ExamplesPage from "./pages/examples";
 import DemoPage from "./pages/demo";
-import Bar1DebugPage from "./pages/bar1-debug";
 
 function App() {
   return (
@@ -40,7 +39,6 @@ function App() {
         <Route path="/docs" element={<ExamplesPage />} />
         <Route path="/debug" element={<DebugPage />} />
         <Route path="/demo" element={<DemoPage />} />
-        <Route path="/bar1-debug" element={<Bar1DebugPage />} />
         <Route path="/" element={<DashboardPage />} />
       </Routes>
     </DefaultLayout>
