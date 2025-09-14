@@ -483,11 +483,6 @@ export default function DemoPage() {
         </Card>
       </div>
 
-      {/* 快捷操作按钮 - 占一整行 */}
-      <div className="w-full">
-        <QuickEntryCard />
-      </div>
-
       {/* 流量概览和主控列表 - 响应式布局 */}
       <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 md:gap-6" style={{ minHeight: '400px' }}>
         {/* 流量概览 - 在移动端占满宽度，桌面端占2列 */}
@@ -592,6 +587,43 @@ export default function DemoPage() {
                     </div>
                   </div>
                 )}
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </div>
+
+      {/* 快捷操作和右侧卡片 - 两列布局 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        {/* 快捷操作按钮 - 左侧占一半 */}
+        <div className="w-full">
+          <QuickEntryCard />
+        </div>
+
+        {/* 右侧卡片 - 右侧占一半 */}
+        <div className="w-full">
+          <Card className="h-full min-h-[140px] dark:border-default-100 border border-transparent">
+            <CardHeader className="p-5 pb-0">
+              <div className="flex flex-col items-start gap-1 w-full">
+                <span className="text-base font-semibold text-foreground">系统信息</span>
+              </div>
+            </CardHeader>
+            <CardBody className="p-5 pt-3">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-default-600">在线状态</span>
+                  <Chip size="sm" color="success" variant="flat">
+                    正常运行
+                  </Chip>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-default-600">系统负载</span>
+                  <span className="text-sm text-foreground font-medium">12%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-default-600">内存使用</span>
+                  <span className="text-sm text-foreground font-medium">2.1GB / 8GB</span>
+                </div>
               </div>
             </CardBody>
           </Card>
