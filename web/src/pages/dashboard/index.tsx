@@ -94,6 +94,9 @@ interface Endpoint {
   tunnelCount: number;
 }
 
+/**
+ * 仪表盘页面 - 使用服务端事件 SSE 架构
+ */
 export default function DashboardPage() {
   const { settings } = useSettings();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -127,7 +130,29 @@ export default function DashboardPage() {
     'TCP Out': number;
     'UDP In': number;
     'UDP Out': number;
-  }>>([]);
+  }>>(() => {
+    // 初始化时生成默认的7天0值数据
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return weekdays.map(weekday => ({
+      weekday,
+      'TCP In': 0,
+      'TCP Out': 0,
+      'UDP In': 0,
+      'UDP Out': 0,
+    }));
+  });
+
+  // 生成默认的7天0值数据
+  const generateDefaultWeeklyData = useCallback(() => {
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return weekdays.map(weekday => ({
+      weekday,
+      'TCP In': 0,
+      'TCP Out': 0,
+      'UDP In': 0,
+      'UDP Out': 0,
+    }));
+  }, []);
 
   // 清空日志确认模态框控制
   const { isOpen: isClearOpen, onOpen: onClearOpen, onClose: onClearClose } = useDisclosure();
@@ -370,18 +395,6 @@ export default function DashboardPage() {
       }
     }
   }, [generateDefaultWeeklyData]);
-
-  // 生成默认的7天0值数据
-  const generateDefaultWeeklyData = useCallback(() => {
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return weekdays.map(weekday => ({
-      weekday,
-      'TCP In': 0,
-      'TCP Out': 0,
-      'UDP In': 0,
-      'UDP Out': 0,
-    }));
-  }, []);
 
   // 确认清空日志
   const confirmClearLogs = useCallback(async () => {
