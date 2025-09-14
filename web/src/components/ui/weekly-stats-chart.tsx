@@ -135,16 +135,8 @@ export function WeeklyStatsChart({
             <span className="text-sm text-default-500">加载中...</span>
           </div>
         </div>
-      ) : chartData.length === 0 ? (
-        // 无数据状态
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center">
-            <Icon icon="solar:database-bold" className="text-4xl text-default-300 mb-2" />
-            <span className="text-sm text-default-500">暂无数据</span>
-          </div>
-        </div>
       ) : (
-        // 正常数据显示
+        // 总是显示图表，即使数据为空也显示7天的0值
         <ResponsiveContainer
           className="[&_.recharts-surface]:outline-hidden flex-1"
           height={150}

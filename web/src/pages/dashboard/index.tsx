@@ -341,13 +341,19 @@ export default function DashboardPage() {
       const result = await response.json();
       if (result.success && isMountedRef.current) {
         // 转换后端数据格式为图表组件需要的格式
-        const chartData = result.data.map((item: any) => ({
+        let chartData = result.data.map((item: any) => ({
           weekday: item.weekday,
           'TCP In': item.tcp_in,
           'TCP Out': item.tcp_out,
           'UDP In': item.udp_in,
           'UDP Out': item.udp_out,
         }));
+
+        // 如果后端没有返回数据或数据不足7天，生成默认的7天0值数据
+        if (!chartData || chartData.length === 0) {
+          chartData = generateDefaultWeeklyData();
+        }
+
         setWeeklyStatsData(chartData);
         console.log('[仪表盘前端] 每周统计数据获取成功:', {
           数据条数: chartData.length,
@@ -359,9 +365,22 @@ export default function DashboardPage() {
     } catch (error) {
       if (isMountedRef.current) {
         console.error('获取每周统计数据失败:', error);
-        setWeeklyStatsData([]); // 设置为空数组，显示无数据状态
+        // 出错时也设置默认的7天0值数据，而不是空数组
+        setWeeklyStatsData(generateDefaultWeeklyData());
       }
     }
+  }, [generateDefaultWeeklyData]);
+
+  // 生成默认的7天0值数据
+  const generateDefaultWeeklyData = useCallback(() => {
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return weekdays.map(weekday => ({
+      weekday,
+      'TCP In': 0,
+      'TCP Out': 0,
+      'UDP In': 0,
+      'UDP Out': 0,
+    }));
   }, []);
 
   // 确认清空日志
