@@ -94,7 +94,7 @@ const formatWeekday = (weekday: string) => {
   return dayMap[weekday] || weekday;
 };
 
-export function WeeklyStatsChart({
+function WeeklyStatsChartComponent({
   title = "本周统计",
   categories = ["TCP In", "TCP Out", "UDP In", "UDP Out"],
   color = "primary",
@@ -214,4 +214,7 @@ export function WeeklyStatsChart({
     </Card>
   );
 }
+
+// 使用React.memo优化渲染性能
+export const WeeklyStatsChart = React.memo(WeeklyStatsChartComponent);
 

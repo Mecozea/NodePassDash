@@ -126,11 +126,11 @@ const formatTooltipTime = (timestamp: string): string => {
   }
 };
 
-export function TrafficOverviewChart({ 
-  data, 
-  loading = false, 
+function TrafficOverviewChartComponent({
+  data,
+  loading = false,
   onTimeRangeChange,
-  timeRange = "24Hours" 
+  timeRange = "24Hours"
 }: TrafficOverviewChartProps) {
   const [activeMetric, setActiveMetric] = React.useState<string>("tcp-in");
 
@@ -240,32 +240,43 @@ export function TrafficOverviewChart({
     return { value: value.toString(), unit: "" };
   };
 
-  // 获取最佳单位用于图表显示
+  // 获取最佳单位用于图表显示 - 优化内存使用
   const chartUnit = React.useMemo(() => {
     if (!data || data.length === 0) return "B";
-    
-    const allValues: number[] = [];
-    data.forEach(item => {
-      allValues.push(item.tcpIn, item.tcpOut, item.udpIn, item.udpOut);
-    });
-    
-    const { unit } = getBestUnit(allValues);
+
+    // 直接计算最大值，避免创建大型数组
+    let maxValue = 0;
+    for (const item of data) {
+      maxValue = Math.max(maxValue, item.tcpIn, item.tcpOut, item.udpIn, item.udpOut);
+    }
+
+    const { unit } = getBestUnit([maxValue]);
     return unit;
   }, [data]);
 
-  // 转换数据为图表格式
+  // 转换数据为图表格式 - 优化内存使用
   const chartData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
-    
-    const allValues = data.flatMap(item => [item.tcpIn, item.tcpOut, item.udpIn, item.udpOut]);
-    const { divisor } = getBestUnit(allValues);
-    
+
+    // 使用更高效的方式计算最大值，避免创建大型中间数组
+    let maxValue = 0;
+    for (const item of data) {
+      const values = [item.tcpIn, item.tcpOut, item.udpIn, item.udpOut];
+      const localMax = Math.max(...values);
+      if (localMax > maxValue) {
+        maxValue = localMax;
+      }
+    }
+
+    const { divisor } = getBestUnit([maxValue]);
+
+    // 直接返回转换后的数据，避免多次数组操作
     return data.map(item => ({
       time: item.time, // 保持原始时间戳用于格式化
-      tcpIn: parseFloat((item.tcpIn / divisor).toFixed(2)),
-      tcpOut: parseFloat((item.tcpOut / divisor).toFixed(2)),
-      udpIn: parseFloat((item.udpIn / divisor).toFixed(2)),
-      udpOut: parseFloat((item.udpOut / divisor).toFixed(2)),
+      tcpIn: Math.round((item.tcpIn / divisor) * 100) / 100, // 使用Math.round代替parseFloat
+      tcpOut: Math.round((item.tcpOut / divisor) * 100) / 100,
+      udpIn: Math.round((item.udpIn / divisor) * 100) / 100,
+      udpOut: Math.round((item.udpOut / divisor) * 100) / 100,
     }));
   }, [data, timeRange]);
 
@@ -442,3 +453,6 @@ export function TrafficOverviewChart({
     </Card>
   );
 }
+
+// 使用React.memo优化渲染性能，减少不必要的重新渲染
+export const TrafficOverviewChart = React.memo(TrafficOverviewChartComponent);

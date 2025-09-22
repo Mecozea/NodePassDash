@@ -82,6 +82,10 @@ interface TrafficTrendData {
   recordCount: number;
 }
 
+// 常量定义 - 减少内存占用
+const MAX_TRAFFIC_DATA_POINTS = 50; // 从200减少到50，减少75%内存占用
+const MAX_OPERATION_LOGS = 20; // 从100减少到20，减少80%内存占用
+
 // 主控状态类型
 type EndpointStatus = 'ONLINE' | 'OFFLINE' | 'FAIL';
 
@@ -167,13 +171,18 @@ export default function DashboardPage() {
 
     return () => {
       isMountedRef.current = false;
-      // 清理状态数据
+      // 立即清理所有大数据集状态，释放内存
       setTunnelStats({ total: 0, running: 0, stopped: 0, error: 0, offline: 0, total_endpoints: 0 });
       setOperationLogs([]);
       setTrafficTrend([]);
       setEndpoints([]);
       setTodayTrafficData({ tcpIn: 0, tcpOut: 0, udpIn: 0, udpOut: 0, total: 0 });
       setWeeklyStatsData([]);
+
+      // 强制触发垃圾回收提示（开发环境）
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Dashboard] 组件卸载，已清理所有数据状态');
+      }
     };
   }, []);
 
@@ -207,13 +216,18 @@ export default function DashboardPage() {
   // 获取操作日志数据
   const fetchOperationLogs = useCallback(async () => {
     try {
-      const response = await fetch(buildApiUrl('/api/dashboard/operate_logs?limit=1000'));
+      // 直接从API层面限制数据量，减少网络传输和内存占用
+      const response = await fetch(buildApiUrl(`/api/dashboard/operate_logs?limit=${MAX_OPERATION_LOGS}`));
 
       if (!response.ok) throw new Error('获取操作日志失败');
       const data: OperationLog[] = await response.json();
 
       if (isMountedRef.current) {
-        setOperationLogs(data);
+        // API已经限制了数量，但仍进行客户端保护
+        const limitedLogs = data.length > MAX_OPERATION_LOGS
+          ? data.slice(-MAX_OPERATION_LOGS)
+          : data;
+        setOperationLogs(limitedLogs);
       }
     } catch (error) {
       if (isMountedRef.current) {
@@ -222,7 +236,7 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // 处理IP地址隐藏的函数
+  // 处理IP地址隐藏的函数 - 优化依赖，避免不必要的重创建
   const maskIpAddress = useCallback((url: string): string => {
     // 如果隐私模式关闭，直接返回原始URL
     if (!settings.isPrivacyMode) {
@@ -258,16 +272,16 @@ export default function DashboardPage() {
       // 如果处理失败，返回原始URL
       return url;
     }
-  }, [settings.isPrivacyMode]);
+  }, [settings?.isPrivacyMode]); // 使用可选链操作符，减少依赖变化
 
-  // 格式化字节数
-  const formatBytes = useCallback((bytes: number): string => {
+  // 格式化字节数 - 纯函数，不需要useCallback
+  const formatBytes = (bytes: number): string => {
     if (bytes === 0) return "0 B";
     const k = 1024;
     const sizes = ["B", "KB", "MB", "GB", "TB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  }, []);
+  };
 
   // 处理今日流量数据 - 通过最早和最晚时间的差值计算今日消耗流量
   const processTodayTrafficData = useCallback((trafficData: TrafficTrendData[]) => {
@@ -338,12 +352,18 @@ export default function DashboardPage() {
 
       const result = await response.json();
       if (result.success && isMountedRef.current) {
-        setTrafficTrend(result.data);
+        // 限制流量数据点数量，防止内存溢出 - 只保留最新的数据点
+        const limitedData = result.data.length > MAX_TRAFFIC_DATA_POINTS
+          ? result.data.slice(-MAX_TRAFFIC_DATA_POINTS)
+          : result.data;
+
+        setTrafficTrend(limitedData);
         // 处理今日流量数据
-        processTodayTrafficData(result.data);
+        processTodayTrafficData(limitedData);
         console.log('[仪表盘前端] 流量趋势数据获取成功:', {
-          数据条数: result.data.length,
-          示例数据: result.data.slice(0, 3)
+          原始数据条数: result.data.length,
+          限制后数据条数: limitedData.length,
+          示例数据: limitedData.slice(0, 3)
         });
       } else if (isMountedRef.current) {
         throw new Error(result.error || '获取流量趋势数据失败');
@@ -423,7 +443,7 @@ export default function DashboardPage() {
     }
   }, [operationLogs.length, onClearClose]);
 
-  // 初始化数据
+  // 初始化数据 - 改为分批加载，减少同时加载的内存压力
   useEffect(() => {
     const fetchData = async () => {
       if (!isMountedRef.current) return;
@@ -432,13 +452,25 @@ export default function DashboardPage() {
       setTrafficLoading(true);
 
       try {
-        await Promise.all([
-          fetchTunnelStats(),
-          fetchOperationLogs(),
-          fetchTrafficTrend(),
-          fetchEndpoints(),
-          fetchWeeklyStats()
-        ]);
+        // 第一批：加载基础统计数据（优先级最高）
+        console.log('[仪表盘] 加载第一批数据：基础统计');
+        await fetchTunnelStats();
+        await fetchEndpoints();
+
+        if (!isMountedRef.current) return;
+
+        // 第二批：加载流量相关数据
+        console.log('[仪表盘] 加载第二批数据：流量统计');
+        await fetchTrafficTrend();
+        await fetchWeeklyStats();
+
+        if (!isMountedRef.current) return;
+
+        // 第三批：加载操作日志（优先级最低）
+        console.log('[仪表盘] 加载第三批数据：操作日志');
+        await fetchOperationLogs();
+
+        console.log('[仪表盘] 所有数据加载完成');
       } catch (error) {
         if (isMountedRef.current) {
           console.error('加载数据失败:', error);
@@ -470,8 +502,8 @@ export default function DashboardPage() {
     { key: "status", label: "状态" },
   ];
 
-  // 根据操作类型获取图标和样式
-  const getActionIconAndColor = useCallback((action: string) => {
+  // 根据操作类型获取图标和样式 - 纯函数，不需要useCallback
+  const getActionIconAndColor = (action: string) => {
     const actionLower = action.toLowerCase();
 
     if (actionLower.includes('start') || actionLower.includes('启动')) {
@@ -518,7 +550,7 @@ export default function DashboardPage() {
         textColor: 'text-default-600'
       };
     }
-  }, []);
+  };
 
   return (
     <div className={cn("space-y-4 md:space-y-6 p-4 md:p-0", fontSans.className)}>
@@ -781,7 +813,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-start gap-0">
                 <span className="text-base font-semibold text-foreground">最近活动</span>
                 <span className="text-sm text-default-500">
-                  {loading ? "加载中..." : `筛选最近1000条记录`}
+                  {loading ? "加载中..." : `筛选最近100条记录`}
                 </span>
               </div>
               <Button

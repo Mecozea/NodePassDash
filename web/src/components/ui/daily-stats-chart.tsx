@@ -51,7 +51,7 @@ const formatTotal = (value: number | undefined) => {
   return value?.toLocaleString() ?? "0";
 };
 
-export function DailyStatsChart({
+function DailyStatsChartComponent({
   title = "今日流量",
   categories = ["TCP入站", "TCP出站", "UDP入站", "UDP出站"],
   color = "success",
@@ -183,3 +183,6 @@ export function DailyStatsChart({
     </Card>
   );
 }
+
+// 使用React.memo优化渲染性能
+export const DailyStatsChart = React.memo(DailyStatsChartComponent);
