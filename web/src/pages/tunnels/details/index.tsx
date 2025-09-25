@@ -35,6 +35,9 @@ import React, { useEffect } from "react";
 import SimpleCreateTunnelModal from "@/components/tunnels/simple-create-tunnel-modal";
 import RenameTunnelModal from "@/components/tunnels/rename-tunnel-modal";
 import { FullscreenChartModal } from "./fullscreen-chart-modal";
+import { TrafficStatsCard } from "@/components/tunnels/traffic-stats-card";
+import { ConnectionsStatsCard } from "@/components/tunnels/connections-stats-card";
+import { NetworkQualityCard } from "@/components/tunnels/network-quality-card";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -1490,9 +1493,27 @@ export default function TunnelDetailPage() {
           </div>
         )}
         {/* 新的流量统计卡片 - 非实验模式下显示 */}
-        {/* {!settings.isExperimentalMode && (
-
-        )} */}
+        {!settings.isExperimentalMode && (
+          <div className="grid grid-cols-9 gap-4 mb-4">
+            <TrafficStatsCard
+              trafficData={tunnelInfo.traffic}
+              formatTrafficValue={formatTrafficValue}
+            />
+            <ConnectionsStatsCard
+              connectionsData={{
+                pool: tunnelInfo.traffic.pool,
+                tcps: tunnelInfo.traffic.tcps,
+                udps: tunnelInfo.traffic.udps
+              }}
+            />
+            <NetworkQualityCard
+              networkData={{
+                ping: tunnelInfo.traffic.ping,
+                pool: tunnelInfo.traffic.pool
+              }}
+            />
+          </div>
+        )}
         {/* 流量统计卡片 */}
         {false && (
           <div
