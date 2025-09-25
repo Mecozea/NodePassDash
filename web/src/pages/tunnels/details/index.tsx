@@ -59,6 +59,24 @@ import { useNavigate } from "react-router-dom";
 import { useTunnelActions } from "@/lib/hooks/use-tunnel-actions";
 import { addToast } from "@heroui/toast";
 import CellValue from "./cell-value";
+import OriginalCellValue from "./original-cell-value";
+import {
+  InstanceIdIcon,
+  EndpointIcon,
+  TunnelAddressIcon,
+  TargetAddressIcon,
+  LogLevelIcon,
+  PoolSettingsIcon,
+  ConnectionLimitIcon,
+  TLSIcon,
+  CertificateIcon,
+  KeyIcon,
+  PasswordIcon,
+  TimeoutIcon,
+  RateLimitIcon,
+  VersionIcon,
+  ModeIcon,
+} from "@/components/icons/instance-icons";
 import { EnhancedMetricsChart } from "@/components/ui/enhanced-metrics-chart";
 import { TrafficUsageChart } from "@/components/ui/traffic-usage-chart";
 import { DetailedTrafficChart } from "@/components/ui/detailed-traffic-chart";
@@ -1635,44 +1653,52 @@ export default function TunnelDetailPage() {
           </CardHeader>
           <CardBody>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 {/* 基本信息 */}
                 <CellValue
                   label="实例ID"
-                  value={
-                    <>
-                      <div className="flex items-center gap-2">
-                        {tunnelInfo.instanceId}
-                        {/* 新增字段显示 */}
-                        {tunnelInfo.config.mode != null && (
-                          <Chip variant="flat" color="secondary" size="sm">
-                            {getTunnelModeText(
-                              tunnelInfo.type,
-                              tunnelInfo.config.mode
-                            )}
-                          </Chip>
-                        )}
-                      </div>
-                    </>
-                  }
+                  icon={<InstanceIdIcon size={18} className="text-default-600" />}
+                  value={tunnelInfo.instanceId}
                 />
 
                 <CellValue
                   label="主控"
+                  icon={<EndpointIcon size={18} className="text-default-600" />}
                   value={
-                    <div className="flex items-center gap-2">
-                      <Chip variant="bordered" color="default" size="sm">
-                        {tunnelInfo.endpoint}
-                      </Chip>
-                      <Chip variant="flat" color="secondary" size="sm">
-                        {tunnelInfo.endpointVersion || "< v1.4.0"}
-                      </Chip>
-                    </div>
+                    <Chip variant="bordered" color="default" size="sm">
+                      {tunnelInfo.endpoint}
+                    </Chip>
                   }
                 />
 
                 <CellValue
+                  label="版本号"
+                  icon={<VersionIcon size={18} className="text-default-600" />}
+                  value={
+                    <Chip variant="flat" color="secondary" size="sm">
+                      {tunnelInfo.endpointVersion || "< v1.4.0"}
+                    </Chip>
+                  }
+                />
+
+                {tunnelInfo.config.mode != null && (
+                  <CellValue
+                    label="模式"
+                    icon={<ModeIcon size={18} className="text-default-600" />}
+                    value={
+                      <Chip variant="flat" color="primary" size="sm">
+                        {getTunnelModeText(
+                          tunnelInfo.type,
+                          tunnelInfo.config.mode
+                        )}
+                      </Chip>
+                    }
+                  />
+                )}
+
+                <CellValue
                   label="隧道地址"
+                  icon={<TunnelAddressIcon size={18} className="text-default-600" />}
                   value={
                     <span className="font-mono text-sm">
                       {tunnelInfo.tunnelAddress}:{tunnelInfo.config.listenPort}
@@ -1681,6 +1707,7 @@ export default function TunnelDetailPage() {
                 />
                 <CellValue
                   label="目标地址"
+                  icon={<TargetAddressIcon size={18} className="text-default-600" />}
                   value={
                     <span className="font-mono text-sm">
                       {tunnelInfo.targetAddress}:{tunnelInfo.config.targetPort}
@@ -1690,6 +1717,7 @@ export default function TunnelDetailPage() {
 
                 <CellValue
                   label="日志级别"
+                  icon={<LogLevelIcon size={18} className="text-default-600" />}
                   value={
                     <div className="flex items-center gap-2">
                       <Chip
@@ -1719,6 +1747,7 @@ export default function TunnelDetailPage() {
             {tunnelInfo.type === "client" && (
                   <CellValue
                     label="池最小值"
+                    icon={<PoolSettingsIcon size={18} className="text-default-600" />}
                     value={(() => {
                       const min =
                         tunnelInfo.config.min !== undefined &&
@@ -1745,6 +1774,7 @@ export default function TunnelDetailPage() {
             {tunnelInfo.type === "server" && (
                   <CellValue
                     label="池最大值"
+                    icon={<PoolSettingsIcon size={18} className="text-default-600" />}
                     value={(() => {
                       const min =
                         tunnelInfo.config.min !== undefined &&
@@ -1772,6 +1802,7 @@ export default function TunnelDetailPage() {
             {tunnelInfo.config.slot !== undefined && tunnelInfo.config.slot !== null && (
               <CellValue
                 label="最大连接数限制"
+                icon={<ConnectionLimitIcon size={18} className="text-default-600" />}
                 value={
                   <span className="font-mono text-sm">
                     {tunnelInfo.config.slot}
@@ -1785,6 +1816,7 @@ export default function TunnelDetailPage() {
                   <>
                     <CellValue
                       label="TLS 设置"
+                      icon={<TLSIcon size={18} className="text-default-600" />}
                       value={
                         <div className="flex items-center gap-2">
                           <Chip
@@ -1816,10 +1848,12 @@ export default function TunnelDetailPage() {
                       <>
                         <CellValue
                           label="证书路径"
+                          icon={<CertificateIcon size={18} className="text-default-600" />}
                           value={tunnelInfo.config.certPath || "未设置"}
                         />
                         <CellValue
                           label="密钥路径"
+                          icon={<KeyIcon size={18} className="text-default-600" />}
                           value={tunnelInfo.config.keyPath || "未设置"}
                         />
                       </>
@@ -1830,6 +1864,7 @@ export default function TunnelDetailPage() {
                 {tunnelInfo.password && (
                   <CellValue
                     label="隧道密码"
+                    icon={<PasswordIcon size={18} className="text-default-600" />}
                     value={
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs md:text-sm break-all text-default-500">
@@ -1850,6 +1885,7 @@ export default function TunnelDetailPage() {
                 {tunnelInfo.config.read && (
                   <CellValue
                     label="读取超时"
+                    icon={<TimeoutIcon size={18} className="text-default-600" />}
                     value={
                       <span className="font-mono text-sm text-default-600">
                         {tunnelInfo.config.read}
@@ -1861,6 +1897,7 @@ export default function TunnelDetailPage() {
                 {tunnelInfo.config.rate && (
                   <CellValue
                     label="速率限制"
+                    icon={<RateLimitIcon size={18} className="text-default-600" />}
                     value={
                       <span className="font-mono text-sm text-default-600">
                         {tunnelInfo.config.rate} 
@@ -1889,7 +1926,7 @@ export default function TunnelDetailPage() {
               <div className="space-y-4">
                 {/* 自动重启配置 */}
                 {tunnelInfo.endpointVersion && (
-                  <CellValue
+                  <OriginalCellValue
                     label="自动重启"
                     value={
                       <div className="flex items-center justify-center">
@@ -1931,7 +1968,7 @@ export default function TunnelDetailPage() {
                 )}
 
                 {/* 图表自动刷新 */}
-                <CellValue
+                <OriginalCellValue
                   label="图表刷新"
                   value={
                     <div className="flex items-center justify-center">
@@ -1967,7 +2004,7 @@ export default function TunnelDetailPage() {
                 />
 
                 {/* 保存Log日志 */}
-                <CellValue
+                <OriginalCellValue
                   label="保存Log日志"
                   value={
                     <div className="flex items-center justify-center">
