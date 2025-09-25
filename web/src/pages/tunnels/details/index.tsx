@@ -27,6 +27,7 @@ import {
   Spinner,
   Input,
   DatePicker,
+  Divider,
 } from "@heroui/react";
 import { Snippet } from "@/components/ui/snippet";
 import React, { useEffect } from "react";
@@ -54,6 +55,8 @@ import {
   faExpand,
   faHammer,
   faBug,
+  faTag,
+  faNetworkWired,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { useTunnelActions } from "@/lib/hooks/use-tunnel-actions";
@@ -88,7 +91,7 @@ import { useSearchParams } from "react-router-dom";
 import { FileLogViewer } from "@/components/ui/file-log-viewer";
 import { useTunnelSSE } from "@/lib/hooks/use-sse";
 import { useMetricsTrend } from "@/lib/hooks/use-metrics-trend";
-import {parseDate, getLocalTimeZone} from "@internationalized/date";
+import { parseDate, getLocalTimeZone } from "@internationalized/date";
 import TunnelStatsCharts from "@/components/ui/tunnel-stats-charts";
 import { useSettings } from "@/components/providers/settings-provider";
 
@@ -248,7 +251,7 @@ const getTLSModeText = (tlsValue: string): string => {
 // 将隧道模式数字转换为对应的模式文案
 const getTunnelModeText = (type: string, modeValue?: number | null): string => {
   if (modeValue == null) return "未设置";
-  
+
   if (type === "client") {
     switch (modeValue) {
       case 0:
@@ -616,7 +619,7 @@ export default function TunnelDetailPage() {
     const poolTimestamps = apiData?.pool?.created_at || [];
     const tcpsTimestamps = apiData?.tcps?.created_at || [];
     const udpsTimestamps = apiData?.udps?.created_at || [];
-    
+
     const poolValues = apiData?.pool?.avg_delay || [];
     const tcpsValues = apiData?.tcps?.avg_delay || [];
     const udpsValues = apiData?.udps?.avg_delay || [];
@@ -843,12 +846,12 @@ export default function TunnelDetailPage() {
       if ((window as any).fileLogViewerRef) {
         delete (window as any).fileLogViewerRef;
       }
-      
+
       // 清理useRef中的大数据，释放内存
       if (previousStatsRef.current) {
         previousStatsRef.current = null;
       }
-      
+
       // 清理流量历史数据数组
       if (trafficHistoryRef.current) {
         trafficHistoryRef.current = {
@@ -896,12 +899,12 @@ export default function TunnelDetailPage() {
         setTunnelInfo((prev) =>
           prev
             ? {
-                ...prev,
-                status: {
-                  type: data.status === "running" ? "success" : "danger",
-                  text: data.status === "running" ? "运行中" : "已停止",
-                },
-              }
+              ...prev,
+              status: {
+                type: data.status === "running" ? "success" : "danger",
+                text: data.status === "running" ? "运行中" : "已停止",
+              },
+            }
             : null
         );
       }
@@ -916,18 +919,18 @@ export default function TunnelDetailPage() {
         setTunnelInfo((prev) =>
           prev
             ? {
-                ...prev,
-                traffic: {
-                  tcpRx: data.tcpRx,
-                  tcpTx: data.tcpTx,
-                  udpRx: data.udpRx,
-                  udpTx: data.udpTx,
-                  pool: data.pool || prev.traffic.pool,
-                  ping: data.ping || prev.traffic.ping,
-                  tcps: data.tcps || prev.traffic.tcps,
-                  udps: data.udps || prev.traffic.udps,
-                },
-              }
+              ...prev,
+              traffic: {
+                tcpRx: data.tcpRx,
+                tcpTx: data.tcpTx,
+                udpRx: data.udpRx,
+                udpTx: data.udpTx,
+                pool: data.pool || prev.traffic.pool,
+                ping: data.ping || prev.traffic.ping,
+                tcps: data.tcps || prev.traffic.tcps,
+                udps: data.udps || prev.traffic.udps,
+              },
+            }
             : null
         );
       }
@@ -957,12 +960,12 @@ export default function TunnelDetailPage() {
         setTunnelInfo((prev) =>
           prev
             ? {
-                ...prev,
-                status: {
-                  type: newStatus ? "success" : "danger",
-                  text: newStatus ? "运行中" : "已停止",
-                },
-              }
+              ...prev,
+              status: {
+                type: newStatus ? "success" : "danger",
+                text: newStatus ? "运行中" : "已停止",
+              },
+            }
             : null
         );
       },
@@ -980,12 +983,12 @@ export default function TunnelDetailPage() {
         setTunnelInfo((prev) =>
           prev
             ? {
-                ...prev,
-                status: {
-                  type: "success",
-                  text: "运行中",
-                },
-              }
+              ...prev,
+              status: {
+                type: "success",
+                text: "运行中",
+              },
+            }
             : null
         );
       },
@@ -1029,12 +1032,12 @@ export default function TunnelDetailPage() {
         setTunnelInfo((prev) =>
           prev
             ? {
-                ...prev,
-                config: {
-                  ...prev.config,
-                  restart: newRestartValue,
-                },
-              }
+              ...prev,
+              config: {
+                ...prev.config,
+                restart: newRestartValue,
+              },
+            }
             : null
         );
 
@@ -1134,7 +1137,7 @@ export default function TunnelDetailPage() {
   // 处理实时日志开关切换
   const handleRealtimeLoggingToggle = React.useCallback(async (enabled: boolean) => {
     setIsRealtimeLogging(enabled);
-    
+
     if (enabled) {
       // 开启实时日志：直接清空日志显示，不调用清除接口
       if ((window as any).fileLogViewerRef && (window as any).fileLogViewerRef.clearDisplay) {
@@ -1144,7 +1147,7 @@ export default function TunnelDetailPage() {
     } else {
       // 关闭实时日志：恢复到历史日志模式，默认选择今天
       const today = new Date().toISOString().split('T')[0];
-      
+
       setLogDate(today);
       setSelectedLogDate(today);
       setLogRefreshTrigger((prev) => prev + 1);
@@ -1154,9 +1157,9 @@ export default function TunnelDetailPage() {
   // 处理日期选择变更（仅在非实时模式下有效）
   const handleLogDateChange = React.useCallback(async (date: string | null) => {
     if (isRealtimeLogging) return; // 实时模式下不允许选择日期
-    
+
     setSelectedLogDate(date);
-    
+
     // 触发FileLogViewer刷新以加载新日期的日志
     if (date) {
       setLogDate(date);
@@ -1299,7 +1302,7 @@ export default function TunnelDetailPage() {
             >
               重启
             </Button>
-            <Button
+            {false && <Button
               variant="flat"
               color="danger"
               startContent={<FontAwesomeIcon icon={faTrash} />}
@@ -1307,7 +1310,7 @@ export default function TunnelDetailPage() {
               className="flex-shrink-0"
             >
               删除
-            </Button>
+            </Button>}
             <Button
               variant="flat"
               color="default"
@@ -1348,7 +1351,7 @@ export default function TunnelDetailPage() {
             >
               重启
             </Button>
-            <Button
+            {false && <Button
               variant="flat"
               color="danger"
               startContent={<FontAwesomeIcon icon={faTrash} />}
@@ -1357,7 +1360,7 @@ export default function TunnelDetailPage() {
               size="sm"
             >
               删除
-            </Button>
+            </Button>}
             <Button
               variant="flat"
               color="default"
@@ -1480,15 +1483,18 @@ export default function TunnelDetailPage() {
         {/* 隧道监控统计图 - 仅在实验模式下显示 */}
         {settings.isExperimentalMode && (
           <div className="mb-4">
-            <TunnelStatsCharts 
+            <TunnelStatsCharts
               instanceId={tunnelInfo.instanceId}
               isExperimentalMode={settings.isExperimentalMode}
             />
           </div>
         )}
+        {/* 新的流量统计卡片 - 非实验模式下显示 */}
+        {/* {!settings.isExperimentalMode && (
 
-        {/* 流量统计卡片 - 非实验模式下显示 */}
-        {!settings.isExperimentalMode && (
+        )} */}
+        {/* 流量统计卡片 */}
+        {false && (
           <div
             className="grid gap-2 md:gap-3 mb-4"
             style={{
@@ -1598,7 +1604,7 @@ export default function TunnelDetailPage() {
               </Card>
             )}
 
-           
+
 
             {tunnelInfo.traffic.tcps !== null && (
               <Card className="p-1 md:p-2 bg-amber-50 dark:bg-amber-950/30 shadow-none">
@@ -1661,26 +1667,6 @@ export default function TunnelDetailPage() {
                   value={tunnelInfo.instanceId}
                 />
 
-                <CellValue
-                  label="主控"
-                  icon={<EndpointIcon size={18} className="text-default-600" />}
-                  value={
-                    <Chip variant="bordered" color="default" size="sm">
-                      {tunnelInfo.endpoint}
-                    </Chip>
-                  }
-                />
-
-                <CellValue
-                  label="版本号"
-                  icon={<VersionIcon size={18} className="text-default-600" />}
-                  value={
-                    <Chip variant="flat" color="secondary" size="sm">
-                      {tunnelInfo.endpointVersion || "< v1.4.0"}
-                    </Chip>
-                  }
-                />
-
                 {tunnelInfo.config.mode != null && (
                   <CellValue
                     label="模式"
@@ -1695,6 +1681,24 @@ export default function TunnelDetailPage() {
                     }
                   />
                 )}
+
+                <CellValue
+                  label="主控"
+                  icon={<EndpointIcon size={18} className="text-default-600" />}
+                  value={
+                      tunnelInfo.endpoint  
+                  }
+                />
+
+                <CellValue
+                  label="版本号"
+                  icon={<VersionIcon size={18} className="text-default-600" />}
+                  value={
+                    <Chip variant="flat" color="secondary" size="sm">
+                      {tunnelInfo.endpointVersion || "< v1.4.0"}
+                    </Chip>
+                  }
+                />
 
                 <CellValue
                   label="隧道地址"
@@ -1731,10 +1735,10 @@ export default function TunnelDetailPage() {
                         }
                         size="sm"
                       >
-                        {tunnelInfo.config.logLevel === "inherit"
+                        {tunnelInfo.config.logLevel === "inherit" || tunnelInfo.config.logLevel === "" 
                           ? tunnelInfo.config.endpointLog
                             ? `继承主控 [${tunnelInfo.config.endpointLog.toUpperCase()}]`
-                            : "继承主控设置"
+                            : "继承主控"
                           : tunnelInfo.config.logLevel === "none"
                             ? "无日志 [NONE]"
                             : tunnelInfo.config.logLevel.toUpperCase()}
@@ -1743,23 +1747,23 @@ export default function TunnelDetailPage() {
                   }
                 />
                 {/* 配置信息字段 */}
-                            {/* 仅客户端模式下显示 min/max */}
-            {tunnelInfo.type === "client" && (
+                {/* 仅客户端模式下显示 min/max */}
+                {tunnelInfo.type === "client" && (
                   <CellValue
                     label="池最小值"
                     icon={<PoolSettingsIcon size={18} className="text-default-600" />}
                     value={(() => {
                       const min =
                         tunnelInfo.config.min !== undefined &&
-                        tunnelInfo.config.min !== null
+                          tunnelInfo.config.min !== null
                           ? tunnelInfo.config.min
                           : 64;
                       const max =
                         tunnelInfo.config.max !== undefined &&
-                        tunnelInfo.config.max !== null
+                          tunnelInfo.config.max !== null
                           ? tunnelInfo.config.max
                           : 1024;
-                      
+
                       return (
                         <span className="font-mono text-sm">
                           {min}
@@ -1771,22 +1775,22 @@ export default function TunnelDetailPage() {
                     })()}
                   />
                 )}
-            {tunnelInfo.type === "server" && (
+                {tunnelInfo.type === "server" && (
                   <CellValue
                     label="池最大值"
                     icon={<PoolSettingsIcon size={18} className="text-default-600" />}
                     value={(() => {
                       const min =
                         tunnelInfo.config.min !== undefined &&
-                        tunnelInfo.config.min !== null
+                          tunnelInfo.config.min !== null
                           ? tunnelInfo.config.min
                           : 64;
                       const max =
                         tunnelInfo.config.max !== undefined &&
-                        tunnelInfo.config.max !== null
+                          tunnelInfo.config.max !== null
                           ? tunnelInfo.config.max
                           : 1024;
-                      
+
                       return (
                         <span className="font-mono text-sm">
                           {max}
@@ -1798,21 +1802,30 @@ export default function TunnelDetailPage() {
                     })()}
                   />
                 )}
-                
-            {tunnelInfo.config.slot !== undefined && tunnelInfo.config.slot !== null && (
-              <CellValue
-                label="最大连接数限制"
-                icon={<ConnectionLimitIcon size={18} className="text-default-600" />}
-                value={
-                  <span className="font-mono text-sm">
-                    {tunnelInfo.config.slot}
-                  </span>
-                }
-              />
-            )}
-            
-                            {/* 仅服务端模式显示TLS设置 */}
-            {tunnelInfo.type === "server" && (
+
+                {tunnelInfo.config.slot !== undefined && tunnelInfo.config.slot !== null && (
+                  <CellValue
+                    label="最大连接数限制"
+                    icon={<ConnectionLimitIcon size={18} className="text-default-600" />}
+                    value={
+                      <span className="font-mono text-sm">
+                        {tunnelInfo.config.slot}
+                      </span>
+                    }
+                  />
+                )}
+                <CellValue
+                    label="自动重启"
+                    onPress={() => handleRestartToggle(!tunnelInfo.config.restart)}
+                    icon={<TimeoutIcon size={18} className="text-default-600" />}
+                    value={
+                      <span className="font-mono text-sm text-default-600">
+                        {tunnelInfo.config.restart?'开启':'禁用'}
+                      </span>
+                    }
+                  />
+                {/* 仅服务端模式显示TLS设置 */}
+                {tunnelInfo.type === "server" && (
                   <>
                     <CellValue
                       label="TLS 设置"
@@ -1900,21 +1913,94 @@ export default function TunnelDetailPage() {
                     icon={<RateLimitIcon size={18} className="text-default-600" />}
                     value={
                       <span className="font-mono text-sm text-default-600">
-                        {tunnelInfo.config.rate} 
+                        {tunnelInfo.config.rate}
                         <span className="text-default-400 text-xs">
-                        Mbps
+                          Mbps
                         </span>
                       </span>
                     }
                   />
                 )}
               </div>
+
+              {/* 分隔线和命令行信息 */}
+              <Divider className="my-4" />
+
+              {/* 命令行信息 */}
+              <div className="space-y-3">
+                <Snippet hideCopyButton={false} hideSymbol={true} className="xs:text-xs">
+                  {tunnelInfo.commandLine}
+                </Snippet>
+              </div>
             </div>
           </CardBody>
         </Card>
 
-        {/* 实例设置 */}
+        {/* 实例操作 */}
         <Card className="p-2">
+          <CardHeader className="flex items-center justify-between pb-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold">实例操作</h3>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <div className="grid grid-cols-5 gap-2">
+              <Button
+                variant="flat"
+                size="md"
+                color="danger"
+                onClick={() => setResetModalOpen(true)}
+                isDisabled={resetLoading}
+                className="h-16 flex flex-col items-center justify-center gap-1 p-2"
+              >
+                <FontAwesomeIcon icon={faHammer} className="w-5 h-5" />
+                <span className="text-xs">重置实例</span>
+              </Button>
+              <Button
+                variant="flat"
+                size="md"
+                color="primary"
+                onClick={handleRenameClick}
+                className="h-16 flex flex-col items-center justify-center gap-1 p-2"
+              >
+                <FontAwesomeIcon icon={faPen} className="w-5 h-5" />
+                <span className="text-xs">重命名</span>
+              </Button>
+              <Button
+                variant="flat"
+                size="md"
+                color="warning"
+                onClick={() => setTcpingModalOpen(true)}
+                className="h-16 flex flex-col items-center justify-center gap-1 p-2"
+              >
+                <FontAwesomeIcon icon={faBug} className="w-5 h-5" />
+                <span className="text-xs">网络诊断</span>
+              </Button>
+              <Button
+                variant="flat"
+                size="md"
+                color="default"
+                className="h-16 flex flex-col items-center justify-center gap-1 p-2"
+              >
+                <FontAwesomeIcon icon={faTag} className="w-5 h-5" />
+                <span className="text-xs">实例标签</span>
+              </Button>
+              <Button
+                variant="flat"
+                size="md"
+                color="danger"
+                onClick={handleDeleteClick}
+                className="h-16 flex flex-col items-center justify-center gap-1 p-2"
+              >
+                <FontAwesomeIcon icon={faTrash} className="w-5 h-5" />
+                <span className="text-xs">删除实例</span>
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* 实例设置 - 临时隐藏 */}
+        {false && <Card className="p-2">
           <CardHeader className="flex items-center justify-between pb-0">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">实例设置</h3>
@@ -2054,7 +2140,7 @@ export default function TunnelDetailPage() {
                   >
                     重置实例
                   </Button>
-                  
+
                   <Button
                     variant="flat"
                     color="default"
@@ -2079,10 +2165,10 @@ export default function TunnelDetailPage() {
               </div>
             </div>
           </CardBody>
-        </Card>
+        </Card>}
 
         {/* 命令行信息 */}
-        <Accordion variant="shadow">
+       { false && <Accordion variant="shadow">
           <AccordionItem
             key="command"
             aria-label="命令行"
@@ -2094,7 +2180,7 @@ export default function TunnelDetailPage() {
               </Snippet>
             </div>
           </AccordionItem>
-        </Accordion>
+        </Accordion>}
 
         {/* 迷你指标图表 - 两行布局 */}
         <div className="space-y-3">
@@ -2466,7 +2552,7 @@ export default function TunnelDetailPage() {
                   {logCount} 条记录 {logDate ? `(${logDate})` : ''}
                 </Chip> */}
               </div>
-              
+
               {/* 实时日志开关 - 移动端第一行，桌面端第二行 */}
               <div className="flex items-center gap-2 sm:hidden">
                 <span className="text-xs text-default-600">实时</span>
@@ -2478,7 +2564,7 @@ export default function TunnelDetailPage() {
                 />
               </div>
             </div>
-            
+
             {/* 第二行：剩余控件 */}
             <div className="flex items-center justify-start sm:justify-end gap-2 overflow-x-auto">
               {/* 实时日志开关 - 桌面端显示 */}
@@ -2491,7 +2577,7 @@ export default function TunnelDetailPage() {
                   color="primary"
                 />
               </div>
-              
+
               {/* 日期选择 */}
               <DatePicker
                 size="sm"
@@ -2584,8 +2670,8 @@ export default function TunnelDetailPage() {
                     <div className="space-y-3">
                       <p className="text-sm font-medium">确认清空日志</p>
                       <p className="text-xs text-default-500">
-                        {isRealtimeLogging 
-                          ? "此操作将清空当前实时输出的内容。" 
+                        {isRealtimeLogging
+                          ? "此操作将清空当前实时输出的内容。"
                           : "此操作将清空页面显示和所有已保存的日志文件，且不可撤销。"}
                       </p>
                       <div className="flex gap-2">
@@ -2725,7 +2811,7 @@ export default function TunnelDetailPage() {
                   网络诊断测试
                 </div>
               </ModalHeader>
-              
+
               {tcpingLoading ? (
                 // 加载状态 - 充斥整个模态窗内容
                 <ModalBody className="flex-1 flex items-center justify-center py-12">
@@ -2745,7 +2831,7 @@ export default function TunnelDetailPage() {
                         <div className={`w-3 h-3 rounded-full ${tcpingResult.connected ? 'bg-success animate-pulse' : 'bg-danger'}`}></div>
                         <h3 className="text-lg font-semibold">测试结果</h3>
                       </div>
-                      
+
                       {/* 目标地址 */}
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
@@ -2766,86 +2852,86 @@ export default function TunnelDetailPage() {
 
                       {/* 始终显示统计信息，无论成功还是失败 */}
                       <div className="space-y-4">
-                          {/* 丢包率和网络质量评估 */}
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-xs text-default-500 mb-1">丢包率</p>
-                              <div className="flex items-center gap-2">
-                                <span className={`text-lg font-bold ${(tcpingResult.packetLoss || 0) === 0 ? 'text-success' : (tcpingResult.packetLoss || 0) < 20 ? 'text-warning' : 'text-danger'}`}>
-                                  {tcpingResult.packetLoss?.toFixed(1) || '0.0'}
-                                </span>
-                                <span className="text-sm text-default-600">%</span>
-                              </div>
-                            </div>
-                            {tcpingResult.avgLatency && (
-                              <div>
-                                <p className="text-xs text-default-500 mb-1">网络质量</p>
-                                <Chip
-                                  variant="flat"
-                                  color={getLatencyQuality(tcpingResult.avgLatency).color as any}
-                                  className="text-xs"
-                                >
-                                  {getLatencyQuality(tcpingResult.avgLatency).text}
-                                </Chip>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* 延迟统计 - 始终显示，空值显示为 - */}
-                          <div className="grid grid-cols-3 gap-4">
-                            <div>
-                              <p className="text-xs text-default-500 mb-1">最快响应</p>
-                              <div className="flex items-center gap-1">
-                                <span className="text-sm font-bold text-success">
-                                  {tcpingResult.minLatency ? tcpingResult.minLatency : '-'}
-                                </span>
-                                {tcpingResult.minLatency && <span className="text-xs text-default-600">ms</span>}
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-xs text-default-500 mb-1">平均响应</p>
-                              <div className="flex items-center gap-1">
-                                <span className="text-sm font-bold text-primary">
-                                  {tcpingResult.avgLatency ? tcpingResult.avgLatency.toFixed(1) : '-'}
-                                </span>
-                                {tcpingResult.avgLatency && <span className="text-xs text-default-600">ms</span>}
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-xs text-default-500 mb-1">最慢响应</p>
-                              <div className="flex items-center gap-1">
-                                <span className="text-sm font-bold text-warning">
-                                  {tcpingResult.maxLatency ? tcpingResult.maxLatency : '-'}
-                                </span>
-                                {tcpingResult.maxLatency && <span className="text-xs text-default-600">ms</span>}
-                              </div>
+                        {/* 丢包率和网络质量评估 */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-default-500 mb-1">丢包率</p>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-lg font-bold ${(tcpingResult.packetLoss || 0) === 0 ? 'text-success' : (tcpingResult.packetLoss || 0) < 20 ? 'text-warning' : 'text-danger'}`}>
+                                {tcpingResult.packetLoss?.toFixed(1) || '0.0'}
+                              </span>
+                              <span className="text-sm text-default-600">%</span>
                             </div>
                           </div>
-
-                          
-                          {/* 延迟质量指示器 */}
                           {tcpingResult.avgLatency && (
-                            <div className="mt-4">
-                              <div className="flex justify-between text-xs text-default-500 mb-2">
-                                <span>0ms</span>
-                                <span>50ms</span>
-                                <span>100ms</span>
-                                <span>200ms+</span>
-                              </div>
-                              <div className="h-2 bg-gradient-to-r from-green-200 via-yellow-200 to-red-200 rounded-full relative">
-                                {/* 位置标记 - 使用圆形标记 */}
-                                <div 
-                                  className="absolute -top-1 w-4 h-4 bg-white rounded-full border-2 border-primary shadow-lg flex items-center justify-center"
-                                  style={{ 
-                                    left: `${Math.min((tcpingResult.avgLatency / 200) * 100, 100)}%`,
-                                    transform: 'translateX(-50%)'
-                                  }}
-                                >
-                                  <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                                </div>
-                              </div>
+                            <div>
+                              <p className="text-xs text-default-500 mb-1">网络质量</p>
+                              <Chip
+                                variant="flat"
+                                color={getLatencyQuality(tcpingResult.avgLatency).color as any}
+                                className="text-xs"
+                              >
+                                {getLatencyQuality(tcpingResult.avgLatency).text}
+                              </Chip>
                             </div>
                           )}
+                        </div>
+
+                        {/* 延迟统计 - 始终显示，空值显示为 - */}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <p className="text-xs text-default-500 mb-1">最快响应</p>
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm font-bold text-success">
+                                {tcpingResult.minLatency ? tcpingResult.minLatency : '-'}
+                              </span>
+                              {tcpingResult.minLatency && <span className="text-xs text-default-600">ms</span>}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs text-default-500 mb-1">平均响应</p>
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm font-bold text-primary">
+                                {tcpingResult.avgLatency ? tcpingResult.avgLatency.toFixed(1) : '-'}
+                              </span>
+                              {tcpingResult.avgLatency && <span className="text-xs text-default-600">ms</span>}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs text-default-500 mb-1">最慢响应</p>
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm font-bold text-warning">
+                                {tcpingResult.maxLatency ? tcpingResult.maxLatency : '-'}
+                              </span>
+                              {tcpingResult.maxLatency && <span className="text-xs text-default-600">ms</span>}
+                            </div>
+                          </div>
+                        </div>
+
+
+                        {/* 延迟质量指示器 */}
+                        {tcpingResult.avgLatency && (
+                          <div className="mt-4">
+                            <div className="flex justify-between text-xs text-default-500 mb-2">
+                              <span>0ms</span>
+                              <span>50ms</span>
+                              <span>100ms</span>
+                              <span>200ms+</span>
+                            </div>
+                            <div className="h-2 bg-gradient-to-r from-green-200 via-yellow-200 to-red-200 rounded-full relative">
+                              {/* 位置标记 - 使用圆形标记 */}
+                              <div
+                                className="absolute -top-1 w-4 h-4 bg-white rounded-full border-2 border-primary shadow-lg flex items-center justify-center"
+                                style={{
+                                  left: `${Math.min((tcpingResult.avgLatency / 200) * 100, 100)}%`,
+                                  transform: 'translateX(-50%)'
+                                }}
+                              >
+                                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
