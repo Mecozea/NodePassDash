@@ -80,6 +80,8 @@ import {
   PasswordIcon,
   TimeoutIcon,
   RateLimitIcon,
+  ProxyProtocolIcon,
+  TagsIcon,
   VersionIcon,
   ModeIcon,
 } from "@/components/icons/instance-icons";
@@ -385,6 +387,7 @@ export default function TunnelDetailPage() {
   const [clearPopoverOpen, setClearPopoverOpen] = React.useState(false);
   const [exportLoading, setExportLoading] = React.useState(false);
   const [resetModalOpen, setResetModalOpen] = React.useState(false);
+  const [selectedStatsTab, setSelectedStatsTab] = React.useState<string>("traffic");
   const [resetLoading, setResetLoading] = React.useState(false);
 
   // 全屏图表模态状态
@@ -1942,8 +1945,21 @@ export default function TunnelDetailPage() {
                     }
                   />
                 )}
+                <CellValue
+                      label="Proxy Protocol"
+                      icon={<ProxyProtocolIcon size={18} className="text-default-600" />}
+                      value={
+                        "关闭"
+                      }
+                />
+                <CellValue
+                      label="标签"
+                      icon={<TagsIcon size={18} className="text-default-600" />}
+                      value={
+                        "暂未设置"
+                      }
+                />
               </div>
-
               {/* 分隔线和命令行信息 */}
               <Divider className="my-4" />
 
@@ -2203,289 +2219,170 @@ export default function TunnelDetailPage() {
           </AccordionItem>
         </Accordion>}
 
-        {/* 迷你指标图表 - 两行布局 */}
-        <div className="space-y-3">
-          {/* 实验性功能：只显示流量累计和端内延迟 */}
-          {settings.isExperimentalMode ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* 流量累计 */}
-              <Card className="p-2">
-                <CardHeader className="pb-1 pt-2 px-2 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <h4 className="text-sm font-semibold">流量累计</h4>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: "hsl(217 91% 60%)" }}
-                        ></div>
-                        <span className="text-xs text-default-600">TCP入</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: "hsl(142 76% 36%)" }}
-                        ></div>
-                        <span className="text-xs text-default-600">TCP出</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: "hsl(262 83% 58%)" }}
-                        ></div>
-                        <span className="text-xs text-default-600">UDP入</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: "hsl(25 95% 53%)" }}
-                        ></div>
-                        <span className="text-xs text-default-600">UDP出</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="light"
-                    isIconOnly
-                    onPress={() => openFullscreenChart("traffic", "流量累计")}
-                    className="h-6 w-6 min-w-0"
-                  >
-                    <FontAwesomeIcon icon={faExpand} className="text-xs" />
-                  </Button>
-                </CardHeader>
-                <CardBody className="pt-0 px-2 pb-2">
-                  <div className="h-[140px]">
-                    <DetailedTrafficChart
-                      data={transformDetailedTrafficData(metricsData?.data)}
-                      height={140}
-                      loading={metricsLoading && !metricsData}
-                      error={metricsError || undefined}
-                      className="h-full w-full"
-                    />
-                  </div>
-                </CardBody>
-              </Card>
+        {/* 统计图表 - Tab 切换卡片 */}
+        <Card className="p-4">
+          {/* Tab 标题行：左侧Tabs，右侧图例和放大按钮 */}
+          <div className="flex items-center justify-between mb-4">
+            <Tabs
+              selectedKey={selectedStatsTab}
+              onSelectionChange={(key) => setSelectedStatsTab(key as string)}
+              variant="solid"
+              classNames={{
+                // base: "w-auto",
+                // tabList: "gap-6 relative rounded-none p-0 border-b-0",
+                // cursor: "w-full bg-primary",
+                // tab: "max-w-fit px-0 h-12",
+                // tabContent: "group-data-[selected=true]:text-primary"
+              }}
+            >
+              <Tab key="traffic" title="流量累计" />
+              <Tab key="speed" title="传输速率" />
+              <Tab key="latency" title="端内延迟" />
+              <Tab key="connections" title="连接数量" />
+            </Tabs>
 
-              {/* 端内延迟 */}
-              <Card className="p-2">
-                <CardHeader className="pb-1 pt-2 px-2 flex items-center justify-between">
-                  <h4 className="text-sm font-semibold">端内延迟</h4>
-                  <Button
-                    size="sm"
-                    variant="light"
-                    isIconOnly
-                    onPress={() => openFullscreenChart("latency", "端内延迟")}
-                    className="h-6 w-6 min-w-0"
-                  >
-                    <FontAwesomeIcon icon={faExpand} className="text-xs" />
-                  </Button>
-                </CardHeader>
-                <CardBody className="pt-0 px-2 pb-2">
-                  <div className="h-[140px]">
-                    <LatencyChart
-                      data={transformLatencyData(metricsData?.data)}
-                      height={140}
-                      loading={metricsLoading && !metricsData}
-                      error={metricsError || undefined}
-                      className="h-full w-full"
-                    />
-                  </div>
-                </CardBody>
-              </Card>
+            <div className="flex items-center gap-3">
+              {/* 根据选中的 tab 显示对应的图例 */}
+              <div className="flex items-center gap-2">
+                {selectedStatsTab === 'traffic' && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: "hsl(217 91% 60%)" }}
+                      ></div>
+                      <span className="text-xs text-default-600">TCP入</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: "hsl(142 76% 36%)" }}
+                      ></div>
+                      <span className="text-xs text-default-600">TCP出</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: "hsl(262 83% 58%)" }}
+                      ></div>
+                      <span className="text-xs text-default-600">UDP入</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: "hsl(25 95% 53%)" }}
+                      ></div>
+                      <span className="text-xs text-default-600">UDP出</span>
+                    </div>
+                  </>
+                )}
+                {selectedStatsTab === 'speed' && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: "hsl(220 70% 50%)" }}
+                      ></div>
+                      <span className="text-xs text-default-600">上传</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: "hsl(280 65% 60%)" }}
+                      ></div>
+                      <span className="text-xs text-default-600">下载</span>
+                    </div>
+                  </>
+                )}
+                {selectedStatsTab === 'connections' && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: "hsl(340 75% 55%)" }}
+                      ></div>
+                      <span className="text-xs text-default-600">池</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: "hsl(24 70% 50%)" }}
+                      ></div>
+                      <span className="text-xs text-default-600">TCP</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: "hsl(173 58% 39%)" }}
+                      ></div>
+                      <span className="text-xs text-default-600">UDP</span>
+                    </div>
+                  </>
+                )}
+                {/* 端内延迟无需图例 */}
+              </div>
+
+              {/* 放大按钮 - 根据当前选中的 tab 切换不同的 action */}
+              <Button
+                size="sm"
+                variant="light"
+                isIconOnly
+                onPress={() => {
+                  const actionMap = {
+                    traffic: () => openFullscreenChart("traffic", "流量累计"),
+                    speed: () => openFullscreenChart("speed", "传输速率"),
+                    latency: () => openFullscreenChart("latency", "端内延迟"),
+                    connections: () => openFullscreenChart("connections", "连接数")
+                  };
+                  actionMap[selectedStatsTab as keyof typeof actionMap]?.();
+                }}
+                className="h-6 w-6 min-w-0"
+              >
+                <FontAwesomeIcon icon={faExpand} className="text-xs" />
+              </Button>
             </div>
-          ) : (
-            <>
-              {/* 第一行：流量用量和速率 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* 详细流量趋势 - 四条线 */}
-                <Card className="p-2">
-                  <CardHeader className="pb-1 pt-2 px-2 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <h4 className="text-sm font-semibold">流量累计</h4>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: "hsl(217 91% 60%)" }}
-                          ></div>
-                          <span className="text-xs text-default-600">TCP入</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: "hsl(142 76% 36%)" }}
-                          ></div>
-                          <span className="text-xs text-default-600">TCP出</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: "hsl(262 83% 58%)" }}
-                          ></div>
-                          <span className="text-xs text-default-600">UDP入</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: "hsl(25 95% 53%)" }}
-                          ></div>
-                          <span className="text-xs text-default-600">UDP出</span>
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="light"
-                      isIconOnly
-                      onPress={() => openFullscreenChart("traffic", "流量累计")}
-                      className="h-6 w-6 min-w-0"
-                    >
-                      <FontAwesomeIcon icon={faExpand} className="text-xs" />
-                    </Button>
-                  </CardHeader>
-                  <CardBody className="pt-0 px-2 pb-2">
-                    <div className="h-[140px]">
-                      <DetailedTrafficChart
-                        data={transformDetailedTrafficData(metricsData?.data)}
-                        height={140}
-                        loading={metricsLoading && !metricsData}
-                        error={metricsError || undefined}
-                        className="h-full w-full"
-                      />
-                    </div>
-                  </CardBody>
-                </Card>
+          </div>
 
-                {/* 速度趋势 */}
-                <Card className="p-2">
-                  <CardHeader className="pb-1 pt-2 px-2 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <h4 className="text-sm font-semibold">传输速率</h4>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: "hsl(220 70% 50%)" }}
-                          ></div>
-                          <span className="text-xs text-default-600">上传</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: "hsl(280 65% 60%)" }}
-                          ></div>
-                          <span className="text-xs text-default-600">下载</span>
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="light"
-                      isIconOnly
-                      onPress={() => openFullscreenChart("speed", "传输速率")}
-                      className="h-6 w-6 min-w-0"
-                    >
-                      <FontAwesomeIcon icon={faExpand} className="text-xs" />
-                    </Button>
-                  </CardHeader>
-                  <CardBody className="pt-0 px-2 pb-2">
-                    <div className="h-[140px]">
-                      <SpeedChart
-                        data={transformSpeedData(metricsData?.data)}
-                        height={140}
-                        loading={metricsLoading && !metricsData}
-                        error={metricsError || undefined}
-                        className="h-full w-full"
-                      />
-                    </div>
-                  </CardBody>
-                </Card>
-              </div>
-
-              {/* 第二行：延迟和连接池 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* 延迟 */}
-                <Card className="p-2">
-                  <CardHeader className="pb-1 pt-2 px-2 flex items-center justify-between">
-                    <h4 className="text-sm font-semibold">端内延迟</h4>
-                    <Button
-                      size="sm"
-                      variant="light"
-                      isIconOnly
-                      onPress={() => openFullscreenChart("latency", "端内延迟")}
-                      className="h-6 w-6 min-w-0"
-                    >
-                      <FontAwesomeIcon icon={faExpand} className="text-xs" />
-                    </Button>
-                  </CardHeader>
-                  <CardBody className="pt-0 px-2 pb-2">
-                    <div className="h-[140px]">
-                      <LatencyChart
-                        data={transformLatencyData(metricsData?.data)}
-                        height={140}
-                        loading={metricsLoading && !metricsData}
-                        error={metricsError || undefined}
-                        className="h-full w-full"
-                      />
-                    </div>
-                  </CardBody>
-                </Card>
-                {/* 连接数趋势 */}
-                <Card className="p-2">
-                  <CardHeader className="pb-1 pt-2 px-2 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <h4 className="text-sm font-semibold">连接数量</h4>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: "hsl(340 75% 55%)" }}
-                          ></div>
-                          <span className="text-xs text-default-600">池</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: "hsl(24 70% 50%)" }}
-                          ></div>
-                          <span className="text-xs text-default-600">TCP</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: "hsl(173 58% 39%)" }}
-                          ></div>
-                          <span className="text-xs text-default-600">UDP</span>
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="light"
-                      isIconOnly
-                      onPress={() => openFullscreenChart("connections", "连接数")}
-                      className="h-6 w-6 min-w-0"
-                    >
-                      <FontAwesomeIcon icon={faExpand} className="text-xs" />
-                    </Button>
-                  </CardHeader>
-                  <CardBody className="pt-0 px-2 pb-2">
-                    <div className="h-[140px]">
-                      <ConnectionsChart
-                        data={transformConnectionsData(metricsData?.data)}
-                        height={140}
-                        loading={metricsLoading && !metricsData}
-                        error={metricsError || undefined}
-                        className="h-full w-full"
-                      />
-                    </div>
-                  </CardBody>
-                </Card>
-              </div>
-            </>
-          )}
-        </div>
+          {/* Tab 内容区域 - 只显示图表，不再显示图例和按钮 */}
+          <div className="h-[200px]">
+            {selectedStatsTab === 'traffic' && (
+              <DetailedTrafficChart
+                data={transformDetailedTrafficData(metricsData?.data)}
+                height={200}
+                loading={metricsLoading && !metricsData}
+                error={metricsError || undefined}
+                className="h-full w-full"
+              />
+            )}
+            {selectedStatsTab === 'speed' && (
+              <SpeedChart
+                data={transformSpeedData(metricsData?.data)}
+                height={200}
+                loading={metricsLoading && !metricsData}
+                error={metricsError || undefined}
+                className="h-full w-full"
+              />
+            )}
+            {selectedStatsTab === 'latency' && (
+              <LatencyChart
+                data={transformLatencyData(metricsData?.data)}
+                height={200}
+                loading={metricsLoading && !metricsData}
+                error={metricsError || undefined}
+                className="h-full w-full"
+              />
+            )}
+            {selectedStatsTab === 'connections' && (
+              <ConnectionsChart
+                data={transformConnectionsData(metricsData?.data)}
+                height={200}
+                loading={metricsLoading && !metricsData}
+                error={metricsError || undefined}
+                className="h-full w-full"
+              />
+            )}
+          </div>
+        </Card>
 
         {/* 流量趋势图 - 暂时隐藏 */}
         {/* <Card className="p-2">

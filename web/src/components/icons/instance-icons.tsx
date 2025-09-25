@@ -198,7 +198,27 @@ export const VersionIcon: React.FC<IconProps> = ({ size, color, ...props }) => (
 // 模式图标 - 使用设置图标
 export const ModeIcon: React.FC<IconProps> = ({ size, color, ...props }) => (
   <Icon
-    icon="lucide:settings"
+    icon="tabler:adjustments"
+    width={size || 20}
+    height={size || 20}
+    color={color}
+    {...props}
+  />
+);
+// ProxyProtocol图标 - 使用设置图标
+export const ProxyProtocolIcon: React.FC<IconProps> = ({ size, color, ...props }) => (
+  <Icon
+    icon="lucide:shuffle"
+    width={size || 20}
+    height={size || 20}
+    color={color}
+    {...props}
+  />
+);
+// Tags图标 - 使用设置图标
+export const TagsIcon: React.FC<IconProps> = ({ size, color, ...props }) => (
+  <Icon
+    icon="lucide:tag"
     width={size || 20}
     height={size || 20}
     color={color}

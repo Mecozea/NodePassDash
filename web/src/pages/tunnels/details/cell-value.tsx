@@ -14,10 +14,10 @@ const CellValue = React.forwardRef<HTMLDivElement, CellValueProps>(
     return (
       <div
         ref={ref}
-        className={`flex items-start gap-3 ${
+        className={`flex items-start gap-3 group transition-all duration-200 ${
           isClickable
-            ? 'cursor-pointer hover:bg-default-50 active:bg-default-100 rounded-md px-2 py-1 -mx-2 -my-1 transition-colors'
-            : ''
+            ? 'cursor-pointer hover:bg-default-50 active:bg-default-100 rounded-md px-2 py-1 -mx-2 -my-1'
+            : 'hover:bg-default-25 rounded-md px-2 py-1 -mx-2 -my-1'
         }`}
         onClick={onPress}
         role={isClickable ? 'button' : undefined}
@@ -32,21 +32,23 @@ const CellValue = React.forwardRef<HTMLDivElement, CellValueProps>(
       >
         {/* Icon column */}
         <div
-          className="flex-shrink-0 flex items-center justify-center bg-default-100 rounded-md"
+          className="flex-shrink-0 flex items-center justify-center bg-default-100 rounded-md transition-all duration-200 group-hover:bg-default-200 group-hover:scale-105"
           style={{
             width: 'calc(1.25rem + 0.125rem + 1.25rem)',
             height: 'calc(1.25rem + 0.125rem + 1.25rem)'
           }}
         >
-          {icon}
+          <div className="transition-transform duration-200 group-hover:scale-110">
+            {icon}
+          </div>
         </div>
 
         {/* Content column */}
         <div className="flex-1 min-w-0">
           {/* Label row */}
-          <div className="text-small text-default-500 leading-tight h-5">{label}</div>
+          <div className="text-small text-default-500 leading-tight h-5 transition-colors duration-200 group-hover:text-default-700">{label}</div>
           {/* Value row */}
-          <div className="text-small font-medium mt-0.5 break-words h-5">{value || children}</div>
+          <div className="text-small font-medium mt-0.5 break-words h-5 transition-colors duration-200 group-hover:text-foreground">{value || children}</div>
         </div>
       </div>
     );
