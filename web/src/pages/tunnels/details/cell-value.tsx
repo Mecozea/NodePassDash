@@ -9,20 +9,15 @@ export type CellValueProps = React.HTMLAttributes<HTMLDivElement> & {
 const CellValue = React.forwardRef<HTMLDivElement, CellValueProps>(
   ({label, value, icon, children, ...props}, ref) => (
     <div ref={ref} className="flex items-start gap-3" {...props}>
-      {/* Icon column - DMIT inspired styling */}
+      {/* Icon column */}
       <div
-        className="flex-shrink-0 flex items-center justify-center"
+        className="flex-shrink-0 flex items-center justify-center bg-default-100 rounded-md"
         style={{
           width: 'calc(1.25rem + 0.125rem + 1.25rem)',
-          height: 'calc(1.25rem + 0.125rem + 1.25rem)',
-          backgroundColor: '#e2e8f7',
-          borderRadius: '4px',
-          padding: '8px'
+          height: 'calc(1.25rem + 0.125rem + 1.25rem)'
         }}
       >
-        <div style={{ color: '#467fcf' }}>
-          {icon}
-        </div>
+        {icon}
       </div>
 
       {/* Content column */}
