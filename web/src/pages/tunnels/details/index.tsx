@@ -68,7 +68,7 @@ import CellValue from "./cell-value";
 import OriginalCellValue from "./original-cell-value";
 import {
   InstanceIdIcon,
-  EndpointIcon,
+  EndpointIcon,RestartIcon,
   TunnelAddressIcon,
   TargetAddressIcon,
   LogLevelIcon,
@@ -1497,7 +1497,7 @@ export default function TunnelDetailPage() {
         )}
         {/* 新的流量统计卡片 - 非实验模式下显示 */}
         {!settings.isExperimentalMode && (
-          <div className="grid grid-cols-9 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <TrafficStatsCard
               trafficData={tunnelInfo.traffic}
               formatTrafficValue={formatTrafficValue}
@@ -1841,7 +1841,7 @@ export default function TunnelDetailPage() {
                 <CellValue
                     label="自动重启"
                     onPress={() => handleRestartToggle(!tunnelInfo.config.restart)}
-                    icon={<TimeoutIcon size={18} className="text-default-600" />}
+                    icon={<RestartIcon size={18} className="text-default-600" />}
                     value={
                       <span className="font-mono text-sm text-default-600">
                         {tunnelInfo.config.restart?'开启':'禁用'}
@@ -1981,7 +1981,7 @@ export default function TunnelDetailPage() {
             </div>
           </CardHeader>
           <CardBody>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <Button
                 variant="flat"
                 size="md"

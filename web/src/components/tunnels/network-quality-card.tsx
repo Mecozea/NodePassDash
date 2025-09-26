@@ -1,4 +1,4 @@
-import { Card } from '@heroui/react';
+import { Card, CardBody, CardHeader } from '@heroui/react';
 
 interface NetworkQualityData {
   ping?: number | null;
@@ -39,68 +39,70 @@ export const NetworkQualityCard = ({ networkData }: NetworkQualityCardProps) => 
   const poolPercentage = poolQuality.percentage;
 
   return (
-    <div className="col-span-3">
-      <Card className="relative p-4 cursor-pointer transition-all duration-300 hover:shadow-lg mb-4">
-        {/* 顶部区域 */}
-        <div className="flex flex-row items-center justify-between">
-          <div className="flex flex-row items-center  text-base font-semibold">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              className="text-blue-500 mr-1"
-            >
-              <path
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7z"
-              />
-            </svg>
-            <span>网络质量</span>
+    <div className="col-span-1" style={{
+      gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+      maxWidth: "100%",
+    }}>
+      <Card className="relative p-2 cursor-pointer transition-all duration-300 ">
+        <CardHeader className="flex items-center   pb-0">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            className="text-blue-500 mr-1"
+          >
+            <path
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0m10-6v6l4 2"
+            />
+          </svg>
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-semibold">网络质量</h3>
           </div>
-        </div>
-
-        {/* 主要内容区域 */}
-        <div className="flex flex-row items-center justify-between mt-3">
-          <div className="flex rounded-lg overflow-hidden bg-slate-100 mt-2 w-full">
-            {/* 延迟质量部分 */}
-            <div
-              className="text-white p-4 flex-1 flex flex-col items-center relative bg-orange-500 dark:bg-orange-600"
-              style={{
-                flex: `${latencyPercentage}`,
-                minWidth: '100px'
-              }}
-            >
-              <div className="text-xl font-bold mb-1">
-                {ping > 0 ? `${ping}ms` : '—'}
+        </CardHeader>
+        <CardBody>
+          {/* 主要内容区域 */}
+          <div className="flex flex-row items-center justify-between ">
+            <div className="flex rounded-lg overflow-hidden  mt-2 w-full">
+              {/* 延迟质量部分 */}
+              <div
+                className="p-4 flex-1 flex flex-col items-center relative bg-pink-50 dark:bg-pink-950/30"
+                style={{
+                  flex: `${latencyPercentage}`,
+                  minWidth: '100px'
+                }}
+              >
+                <div className="text-sm md:text-lg font-bold mb-1 text-pink-700 dark:text-pink-300">
+                  {ping > 0 ? `${ping}ms` : '—'}
+                </div>
+                <div className="text-xs font-medium opacity-90 text-pink-600 dark:text-pink-400">
+                  延迟 {latencyQuality.level}
+                </div>
               </div>
-              <div className="text-sm font-medium opacity-90">
-                延迟 {latencyQuality.level}
+
+              {/* 池连接质量部分 */}
+              <div
+                className="p-4 flex-1 flex flex-col items-center bg-cyan-50 dark:bg-cyan-950/30"
+                style={{
+                  flex: `${poolPercentage}`,
+                  minWidth: '100px'
+                }}
+              >
+                <div className="text-sm md:text-lg font-bold mb-1 text-cyan-700 dark:text-cyan-300">
+                  {pool}
+                </div>
+                <div className="text-xs font-medium opacity-90 text-cyan-600 dark:text-cyan-400">
+                  池 {poolQuality.level}
+                </div>
               </div>
             </div>
-
-            {/* 池连接质量部分 */}
-            <div
-              className="text-white p-4 flex-1 flex flex-col items-center bg-cyan-500 dark:bg-cyan-600"
-              style={{
-                flex: `${poolPercentage}`,
-                minWidth: '100px'
-              }}
-            >
-              <div className="text-xl font-bold mb-1">
-                {pool}
-              </div>
-              <div className="text-sm font-medium opacity-90">
-                池 {poolQuality.level}
-              </div>
-            </div>
           </div>
-        </div>
-
+        </CardBody>
       </Card>
     </div>
   );

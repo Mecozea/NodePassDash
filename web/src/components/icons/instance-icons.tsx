@@ -225,3 +225,13 @@ export const TagsIcon: React.FC<IconProps> = ({ size, color, ...props }) => (
     {...props}
   />
 );
+// Restart图标 - 使用设置图标
+export const RestartIcon: React.FC<IconProps> = ({ size, color, ...props }) => (
+  <Icon
+    icon="lucide:rotate-ccw"
+    width={size || 20}
+    height={size || 20}
+    color={color}
+    {...props}
+  />
+);
