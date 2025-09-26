@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader } from '@heroui/react';
+import { Card, CardBody, CardHeader } from "@heroui/react";
 
 interface ConnectionsData {
   pool?: number | null;
@@ -10,37 +10,44 @@ interface ConnectionsStatsCardProps {
   connectionsData: ConnectionsData;
 }
 
-export const ConnectionsStatsCard = ({ connectionsData }: ConnectionsStatsCardProps) => {
+export const ConnectionsStatsCard = ({
+  connectionsData,
+}: ConnectionsStatsCardProps) => {
   // 计算TCP和UDP连接数
   const tcpConnections = connectionsData.tcps || 0;
   const udpConnections = connectionsData.udps || 0;
   const totalConnections = tcpConnections + udpConnections;
 
   // 计算百分比用于显示比例
-  const tcpPercentage = totalConnections > 0 ? (tcpConnections / totalConnections) * 100 : 50;
-  const udpPercentage = totalConnections > 0 ? (udpConnections / totalConnections) * 100 : 50;
+  const tcpPercentage =
+    totalConnections > 0 ? (tcpConnections / totalConnections) * 100 : 50;
+  const udpPercentage =
+    totalConnections > 0 ? (udpConnections / totalConnections) * 100 : 50;
 
   return (
-    <div className="col-span-1" style={{
-      gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-      maxWidth: "100%",
-    }}>
+    <div
+      className="col-span-1"
+      style={{
+        gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+        maxWidth: "100%",
+      }}
+    >
       <Card className="relative p-2 cursor-pointer transition-all duration-300 ">
         <CardHeader className="flex items-center   pb-0">
           <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
+            className="text-blue-500 mr-1"
             height="20"
             viewBox="0 0 24 24"
-            className="text-blue-500 mr-1"
+            width="20"
+            xmlns="http://www.w3.org/2000/svg"
           >
             <path
+              d="M18 10h-4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2ZM6 4h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"
               fill="none"
               stroke="currentColor"
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth="2"
-              d="M18 10h-4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2ZM6 4h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"
             />
           </svg>
           <div className="flex items-center gap-2">
@@ -56,7 +63,7 @@ export const ConnectionsStatsCard = ({ connectionsData }: ConnectionsStatsCardPr
                 className="p-4 flex-1 flex flex-col items-center relative bg-purple-50 dark:bg-purple-950/30 "
                 style={{
                   flex: `${tcpPercentage}`,
-                  minWidth: '100px'
+                  minWidth: "100px",
                 }}
               >
                 <div className="text-sm md:text-lg font-bold mb-1 text-purple-700 dark:text-purple-300">
@@ -72,7 +79,7 @@ export const ConnectionsStatsCard = ({ connectionsData }: ConnectionsStatsCardPr
                 className="p-4 flex-1 flex flex-col items-center bg-orange-50 dark:bg-orange-950/30"
                 style={{
                   flex: `${udpPercentage}`,
-                  minWidth: '100px'
+                  minWidth: "100px",
                 }}
               >
                 <div className="text-sm md:text-lg font-bold mb-1 text-orange-700 dark:text-orange-300">
