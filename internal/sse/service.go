@@ -280,6 +280,16 @@ func buildTunnel(payload SSEResp) *models.Tunnel {
 	tunnel.Restart = payload.Instance.Restart
 	tunnel.Name = *payload.Instance.Alias
 	tunnel.Status = models.TunnelStatus(payload.Instance.Status)
+	//tunnel.ProxyProtocol = payload.Instance.ProxyProtocol
+
+	// 序列化实例标签为JSON格式
+	if len(payload.Instance.Tags) > 0 {
+		tagsJSON, err := json.Marshal(payload.Instance.Tags)
+		if err == nil {
+			tagsStr := string(tagsJSON)
+			tunnel.InstanceTags = &tagsStr
+		}
+	}
 
 	if tunnel.Mode == nil {
 		tunnel.Mode = (*models.TunnelMode)(payload.Instance.Mode)
@@ -492,10 +502,17 @@ func (s *Service) sendTunnelUpdateByInstanceId(instanceID string, data SSEResp) 
 
 	for clientID, client := range subscribers {
 		if err := client.Send(jsonData); err != nil {
-			log.Errorf("发送隧道更新给客户端 %s 失败: %v", clientID, err)
-			client.SetDisconnected(true)
+			// 检查是否是连接断开错误，使用更合适的日志级别
+			if client.IsDisconnected() {
+				log.Warnf("[SSE]客户端 %s 连接已断开，移除订阅", clientID)
+				// 从订阅列表中移除已断开的客户端
+				delete(subscribers, clientID)
+			} else {
+				log.Errorf("发送隧道更新给客户端 %s 失败: %v", clientID, err)
+			}
+		} else {
+			log.Debugf("[SSE]隧道 %s 的订阅者 %s 推送成功", instanceID, clientID)
 		}
-		log.Infof("[SSE]隧道 %s 的订阅者 %s 推送成功", instanceID, clientID)
 	}
 }
 

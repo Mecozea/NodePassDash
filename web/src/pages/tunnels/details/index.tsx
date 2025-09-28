@@ -58,6 +58,7 @@ import { Snippet } from "@/components/ui/snippet";
 // 引入 SimpleCreateTunnelModal 组件
 import SimpleCreateTunnelModal from "@/components/tunnels/simple-create-tunnel-modal";
 import RenameTunnelModal from "@/components/tunnels/rename-tunnel-modal";
+import InstanceTagModal from "@/components/tunnels/instance-tag-modal";
 
 
 import { TrafficStatsCard } from "@/components/tunnels/traffic-stats-card";
@@ -109,6 +110,7 @@ interface TunnelInfo {
     mode?: number | null; // 隧道模式 (0, 1, 2)
     read?: string; // 读取配置
     rate?: string; // 速率限制配置
+    proxyProtocol?: boolean | null; // Proxy Protocol 支持
   };
   traffic: {
     tcpRx: number;
@@ -125,6 +127,7 @@ interface TunnelInfo {
   tunnelAddress: string;
   targetAddress: string;
   commandLine: string;
+  instanceTags?: Array<{ key: string; value: string }>;
 }
 
 interface PageParams {
@@ -318,7 +321,10 @@ export default function TunnelDetailPage() {
 
       // 设置基本信息
       console.log("[隧道详情] 接收到的数据:", data.tunnelInfo);
-      setTunnelInfo(data.tunnelInfo);
+      setTunnelInfo({
+        ...data.tunnelInfo,
+        instanceTags: data.tunnelInfo.tags || []
+      });
 
       setInitialDataLoaded(true);
     } catch (error) {
@@ -352,6 +358,8 @@ export default function TunnelDetailPage() {
 
   // 重命名模态控制
   const [isRenameModalOpen, setIsRenameModalOpen] = React.useState(false);
+  // 实例标签模态控制
+  const [isInstanceTagModalOpen, setIsInstanceTagModalOpen] = React.useState(false);
 
   // 是否移入回收站
   const [moveToRecycle, setMoveToRecycle] = React.useState(false);
@@ -1030,6 +1038,18 @@ export default function TunnelDetailPage() {
     onOpen();
   };
 
+  // 处理实例标签模态框
+  const handleInstanceTagClick = () => {
+    setIsInstanceTagModalOpen(true);
+  };
+
+  const handleInstanceTagSaved = () => {
+    // 刷新隧道信息以获取最新的标签数据
+    if (tunnelInfo) {
+      fetchTunnelDetails();
+    }
+  };
+
   // 处理重启开关状态变更
   const handleRestartToggle = async (newRestartValue: boolean) => {
     if (!tunnelInfo || isUpdatingRestart) return;
@@ -1332,17 +1352,25 @@ export default function TunnelDetailPage() {
             >
               重启
             </Button>
-            {false && (
-              <Button
-                className="flex-shrink-0"
-                color="danger"
-                startContent={<FontAwesomeIcon icon={faTrash} />}
-                variant="flat"
-                onClick={handleDeleteClick}
-              >
-                删除
-              </Button>
-            )}
+            <Button
+              className="flex-shrink-0"
+              color="danger"
+              startContent={<FontAwesomeIcon icon={faTrash} />}
+              variant="flat"
+              onClick={handleDeleteClick}
+            >
+              删除
+            </Button>
+            <Button
+              className="flex-shrink-0"
+              color="secondary"
+              isDisabled={refreshLoading}
+              startContent={<FontAwesomeIcon icon={faHammer} />}
+              variant="flat"
+              onClick={handleRefresh}
+            >
+              重置
+            </Button>
             <Button
               className="flex-shrink-0"
               color="default"
@@ -1383,18 +1411,16 @@ export default function TunnelDetailPage() {
             >
               重启
             </Button>
-            {false && (
-              <Button
-                className="flex-shrink-0"
-                color="danger"
-                size="sm"
-                startContent={<FontAwesomeIcon icon={faTrash} />}
-                variant="flat"
-                onClick={handleDeleteClick}
-              >
-                删除
-              </Button>
-            )}
+            <Button
+              className="flex-shrink-0"
+              color="danger"
+              size="sm"
+              startContent={<FontAwesomeIcon icon={faTrash} />}
+              variant="flat"
+              onClick={handleDeleteClick}
+            >
+              删除
+            </Button>
             <Button
               className="flex-shrink-0"
               color="default"
@@ -1978,12 +2004,25 @@ export default function TunnelDetailPage() {
                 <CellValue
                   icon={<Icon icon="lucide:shuffle" className="text-default-600" width={18} height={18} />}
                   label="Proxy Protocol"
-                  value={"关闭"}
+                  value={
+                    tunnelInfo.config.proxyProtocol === true
+                      ? "开启"
+                      : "关闭"
+                  }
                 />
                 <CellValue
                   icon={<Icon icon="lucide:tag" className="text-default-600" width={18} height={18} />}
                   label="标签"
-                  value={"暂未设置"}
+                  value={tunnelInfo?.instanceTags && Array.isArray(tunnelInfo.instanceTags) && tunnelInfo.instanceTags.length > 0
+                    ? "已设置"
+                    : "未设置"}
+                  onPress={handleInstanceTagClick}
+                />
+                <CellValue
+                  icon={<Icon icon="lucide:bug" className="text-default-600" width={18} height={18} />}
+                  label="测试网络"
+                  value={"点击测试连通性"}
+                  onPress={ ()=>setTcpingModalOpen(true)}
                 />
               </div>
               {/* 分隔线和命令行信息 */}
@@ -2004,7 +2043,7 @@ export default function TunnelDetailPage() {
         </Card>
 
         {/* 实例操作 */}
-        <Card className="p-2">
+       {false &&( <Card className="p-2">
           <CardHeader className="flex items-center justify-between pb-0">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">实例操作</h3>
@@ -2012,7 +2051,7 @@ export default function TunnelDetailPage() {
           </CardHeader>
           <CardBody>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <Button
+              {/* <Button
                 className="h-16 flex flex-col items-center justify-center gap-1 p-2"
                 color="danger"
                 isDisabled={resetLoading}
@@ -2022,17 +2061,7 @@ export default function TunnelDetailPage() {
               >
                 <FontAwesomeIcon className="w-5 h-5" icon={faHammer} />
                 <span className="text-xs">重置实例</span>
-              </Button>
-              <Button
-                className="h-16 flex flex-col items-center justify-center gap-1 p-2"
-                color="primary"
-                size="md"
-                variant="flat"
-                onClick={handleRenameClick}
-              >
-                <FontAwesomeIcon className="w-5 h-5" icon={faPen} />
-                <span className="text-xs">重命名</span>
-              </Button>
+              </Button> */}
               <Button
                 className="h-16 flex flex-col items-center justify-center gap-1 p-2"
                 color="warning"
@@ -2043,28 +2072,9 @@ export default function TunnelDetailPage() {
                 <FontAwesomeIcon className="w-5 h-5" icon={faBug} />
                 <span className="text-xs">网络诊断</span>
               </Button>
-              <Button
-                className="h-16 flex flex-col items-center justify-center gap-1 p-2"
-                color="default"
-                size="md"
-                variant="flat"
-              >
-                <FontAwesomeIcon className="w-5 h-5" icon={faTag} />
-                <span className="text-xs">实例标签</span>
-              </Button>
-              <Button
-                className="h-16 flex flex-col items-center justify-center gap-1 p-2"
-                color="danger"
-                size="md"
-                variant="flat"
-                onClick={handleDeleteClick}
-              >
-                <FontAwesomeIcon className="w-5 h-5" icon={faTrash} />
-                <span className="text-xs">删除实例</span>
-              </Button>
             </div>
           </CardBody>
-        </Card>
+        </Card>)}
 
         {/* 实例设置 - 临时隐藏 */}
         {false && (
@@ -2715,6 +2725,7 @@ export default function TunnelDetailPage() {
             read: tunnelInfo.config.read,
             rate: tunnelInfo.config.rate,
             mode: tunnelInfo.config.mode,
+            proxyProtocol: tunnelInfo.config.proxyProtocol,
           }}
           isOpen={editModalOpen}
           mode="edit"
@@ -2733,6 +2744,14 @@ export default function TunnelDetailPage() {
         tunnelId={tunnelInfo?.id || 0}
         onOpenChange={setIsRenameModalOpen}
         onRenamed={handleRenameSuccess}
+      />
+      {/* 实例标签模态框 */}
+      <InstanceTagModal
+        isOpen={isInstanceTagModalOpen}
+        onOpenChange={setIsInstanceTagModalOpen}
+        tunnelId={tunnelInfo?.id?.toString() || ""}
+        currentTags={tunnelInfo?.instanceTags || []}
+        onSaved={handleInstanceTagSaved}
       />
 
       {/* 全屏图表模态 */}

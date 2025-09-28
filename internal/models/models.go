@@ -80,6 +80,12 @@ type Tunnel struct {
 	// 最大连接数限制
 	Slot *int64 `json:"slot,omitempty" gorm:"column:slot"`
 
+	// Proxy Protocol 支持
+	ProxyProtocol *bool `json:"proxyProtocol,omitempty" gorm:"column:proxy_protocol"`
+
+	// 实例标签 (JSON格式存储)
+	InstanceTags *string `json:"instance_tags,omitempty" gorm:"type:text;column:instance_tags"`
+
 	CreatedAt     time.Time  `json:"createdAt" gorm:"autoCreateTime;index;column:created_at"`
 	UpdatedAt     time.Time  `json:"updatedAt" gorm:"autoUpdateTime;column:updated_at"`
 	LastEventTime NullTime `json:"lastEventTime,omitempty" gorm:"column:last_event_time;type:datetime"`
