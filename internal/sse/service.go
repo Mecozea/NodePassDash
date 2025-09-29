@@ -282,17 +282,21 @@ func buildTunnel(payload SSEResp) *models.Tunnel {
 	tunnel.Status = models.TunnelStatus(payload.Instance.Status)
 	//tunnel.ProxyProtocol = payload.Instance.ProxyProtocol
 
-	// 序列化实例标签为JSON格式
+	// 转换实例标签为map格式并序列化为JSON
 	if len(payload.Instance.Tags) > 0 {
-		tagsJSON, err := json.Marshal(payload.Instance.Tags)
+		tagsStr, err := nodepass.ConvertInstanceTagsToTagsMap(payload.Instance.Tags)
 		if err == nil {
-			tagsStr := string(tagsJSON)
-			tunnel.InstanceTags = &tagsStr
+			tunnel.Tags = tagsStr
 		}
 	}
 
 	if tunnel.Mode == nil {
 		tunnel.Mode = (*models.TunnelMode)(payload.Instance.Mode)
+	}
+
+	// 复制Config字段到configLine
+	if payload.Instance.Config != nil {
+		tunnel.ConfigLine = payload.Instance.Config
 	}
 
 	return tunnel
@@ -490,7 +494,7 @@ func (s *Service) sendTunnelUpdateByInstanceId(instanceID string, data SSEResp) 
 
 	subscribers, exists := s.tunnelSubs[instanceID]
 	if !exists {
-		log.Warnf("[SSE]隧道 %s 没有订阅者", instanceID)
+		// log.Debug("[SSE]隧道 %s 没有订阅者", instanceID)
 		return
 	}
 

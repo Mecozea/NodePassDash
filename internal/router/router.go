@@ -7,7 +7,7 @@ import (
 	"NodePassDash/internal/endpoint"
 	"NodePassDash/internal/metrics"
 	"NodePassDash/internal/sse"
-	"NodePassDash/internal/tag"
+	"NodePassDash/internal/group"
 	"NodePassDash/internal/tunnel"
 	"NodePassDash/internal/websocket"
 	"fmt"
@@ -49,7 +49,7 @@ func setupAPIRoutes(r *gin.Engine, db *gorm.DB, sseService *sse.Service, sseMana
 		authService := auth.NewService(db)
 		endpointService := endpoint.NewService(db)
 		tunnelService := tunnel.NewService(db)
-		tagService := tag.NewService(db)
+		groupService := group.NewService(db)
 		dashboardService := dashboard.NewService(db)
 
 		// 创建 Metrics 系统相关的处理器
@@ -64,7 +64,7 @@ func setupAPIRoutes(r *gin.Engine, db *gorm.DB, sseService *sse.Service, sseMana
 		api.SetupWebSocketRoutes(apiGroup, wsService)
 		api.SetupDashboardRoutes(apiGroup, dashboardService)
 		api.SetupDataRoutes(apiGroup, db, sseManager, endpointService, tunnelService)
-		api.SetupTagRoutes(apiGroup, tagService)
+		api.SetupGroupRoutes(apiGroup, groupService)
 		api.SetupVersionRoutes(apiGroup, version)
 		api.SetupDebugRoutes(apiGroup)
 	}
